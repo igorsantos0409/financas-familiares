@@ -521,14 +521,18 @@ function tipoTag(t) {
 let _booted = false;
 
 async function init() {
-  try {
-    const {data:{session}, error} = await sb.auth.getSession();
-    if (error) { await sb.auth.signOut(); return; }
-    if(session){ user=session.user; _booted=true; await boot(); }
-  } catch(e) { console.error('Init error:', e); }
-  sb.auth.onAuthStateChange((event,s)=>{
-    // Ignorar eventos que não sejam login inicial
-    if(event==='SIGNED_IN' && !_booted){ _booted=true; user=s.user; boot(); }
+  // Registar listener PRIMEIRO para capturar INITIAL_SESSION
+  sb.auth.onAuthStateChange((event, s) => {
+    if (s && !_booted) {
+      _booted = true;
+      user = s.user;
+      boot();
+    } else if (!s && event === 'SIGNED_OUT') {
+      _booted = false;
+      user = null;
+      document.getElementById('app').classList.remove('visible');
+      document.getElementById('auth-screen').style.display = 'flex';
+    }
   });
 }
 
@@ -615,20 +619,27 @@ async function changeMonth(d){
 function nav(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-  document.getElementById(`page-${p}`).classList.add('active');
-  document.querySelector(`[data-p="${p}"]`).classList.add('active');
+  const pageEl = document.getElementById(`page-${p}`);
+  const navEl  = document.querySelector(`[data-p="${p}"]`);
+  if(pageEl) pageEl.classList.add('active');
+  if(navEl)  navEl.classList.add('active');
   document.getElementById('fab').style.display=(p==='despesas'||p==='dashboard')?'flex':'none';
-  renderPage(p);
+  // Re-add active after async render completes
+  const result = renderPage(p);
+  if(result && result.then) result.then(()=>{
+    if(pageEl) pageEl.classList.add('active');
+    if(navEl)  navEl.classList.add('active');
+  });
 }
 
 function renderPage(p){
-  if(p==='dashboard')   renderDash();
-  if(p==='despesas')    renderDesp();
-  if(p==='rendimentos') renderRend();
-  if(p==='graficos')    renderGraf();
-  if(p==='objetivos')   renderObjetivos();
-  if(p==='dicas')       renderDicas();
-  if(p==='objetivos')   renderObjetivos();
+  if(p==='dashboard')   return renderDash();
+  if(p==='despesas')    return renderDesp();
+  if(p==='rendimentos') return renderRend();
+  if(p==='graficos')    return renderGraf();
+  if(p==='dicas')       return renderDicas();
+  if(p==='objetivos')   return renderObjetivos();
+  if(p==='config')      return renderConfig();
 }
 
 // ── DADOS ─────────────────────────────────────────────────────────────────
@@ -1327,6 +1338,8 @@ async function renderConfig() {
 
   html += `<div style="height:1rem"></div>`;
   el.innerHTML = html;
+  // Garantir que a página está visível após render async
+  el.classList.add('active');
 }
 
 async function saveOrcItem(id) {
