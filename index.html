@@ -518,15 +518,17 @@ function tipoTag(t) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
+let _booted = false;
+
 async function init() {
-  let booted = false;
   try {
     const {data:{session}, error} = await sb.auth.getSession();
     if (error) { await sb.auth.signOut(); return; }
-    if(session){ user=session.user; booted=true; await boot(); }
+    if(session){ user=session.user; _booted=true; await boot(); }
   } catch(e) { console.error('Init error:', e); }
-  sb.auth.onAuthStateChange((_,s)=>{
-    if(s && !booted){ booted=true; user=s.user; boot(); }
+  sb.auth.onAuthStateChange((event,s)=>{
+    // Ignorar eventos que não sejam login inicial
+    if(event==='SIGNED_IN' && !_booted){ _booted=true; user=s.user; boot(); }
   });
 }
 
@@ -567,7 +569,9 @@ async function boot(){
     const _t = new Promise((_,rej) => setTimeout(()=>rej('timeout'),8000));
     try { await Promise.race([Promise.all([loadCats(),loadOrc(),loadR()]),_t]); }
     catch(te){ console.warn('Load timeout:',te); }
+    _navLock = true;
     nav('dashboard');
+    setTimeout(()=>{ _navLock = false; }, 2000);
   } catch(e) {
     console.error('Boot error:', e);
     // Se falhar, volta ao login
@@ -609,7 +613,9 @@ async function changeMonth(d){
   renderPage(p);
 }
 
+let _navLock = false;
 function nav(p){
+  if(_navLock && p !== 'dashboard') return; // Durante boot, só dashboard
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   document.getElementById(`page-${p}`).classList.add('active');
