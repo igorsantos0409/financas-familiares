@@ -566,7 +566,10 @@ async function boot(){
     document.getElementById('u-dt').textContent=new Date().toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'});
     updateM();
     setupDesktop();
-    await Promise.all([loadCats(),loadOrc(),loadR()]);
+    // Timeout de 8s para não ficar preso
+    const _t = new Promise((_,rej) => setTimeout(()=>rej('timeout'),8000));
+    try { await Promise.race([Promise.all([loadCats(),loadOrc(),loadR()]),_t]); }
+    catch(te){ console.warn('Load timeout:',te); }
     renderDash();
   } catch(e) {
     console.error('Boot error:', e);
@@ -630,11 +633,15 @@ function renderPage(p){
 
 // ── DADOS ─────────────────────────────────────────────────────────────────
 async function loadCats(){
-  const{data}=await sb.from('categorias').select('*').order('ordem');
-  if(data){
-    cats=data;
-    document.getElementById('d-cat').innerHTML=cats.map(c=>`<option value="${c.id}">${c.icone} ${c.nome}</option>`).join('');
-  }
+  try {
+    const{data,error}=await sb.from('categorias').select('*').order('ordem');
+    if(error){console.error('loadCats error:',error);return;}
+    if(data){
+      cats=data;
+      const sel=document.getElementById('d-cat');
+      if(sel) sel.innerHTML=cats.map(c=>`<option value="${c.id}">${c.icone} ${c.nome}</option>`).join('');
+    }
+  } catch(e){console.error('loadCats catch:',e);}
 }
 
 async function loadOrc(){
@@ -654,20 +661,26 @@ async function loadOrc(){
 }
 
 async function loadR(){
-  const{data}=await sb.from('rendimentos').select('*').eq('ano',ano).eq('mes',mes).order('created_at');
-  rends=data||[];
+  try {
+    const{data,error}=await sb.from('rendimentos').select('*').eq('ano',ano).eq('mes',mes).order('created_at');
+    if(error){console.error('loadR error:',error);rends=[];return;}
+    rends=data||[];
+  } catch(e){console.error('loadR catch:',e);rends=[];}
 }
 
 async function getDesp(){
-  const{data}=await sb.from('despesas').select('*').eq('ano',ano).eq('mes',mes).order('dia',{ascending:false});
-  return data||[];
+  try {
+    const{data,error}=await sb.from('despesas').select('*').eq('ano',ano).eq('mes',mes).order('dia',{ascending:false});
+    if(error){console.error('getDesp error:',error);return[];}
+    return data||[];
+  } catch(e){console.error('getDesp catch:',e);return[];}
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 async function renderDash(){
   const el=document.getElementById('page-dashboard');
   el.innerHTML='<div class="loading"><div class="spinner"></div>A carregar…</div>';
-
+  try {
   const _deskH=window.innerWidth>=900?`<div class="desktop-header"><h2>Início</h2><div class="desktop-header-right"><div class="month-nav-desktop"><button class="month-btn-d" onclick="changeMonth(-1)">‹</button><span class="month-lbl-d" id="mlbl-d">${MESES[mes-1]} ${ano}</span><button class="month-btn-d" onclick="changeMonth(1)">›</button></div><button style="background:none;border:1px solid var(--border);color:var(--text3);border-radius:var(--radius-sm);padding:.3rem .7rem;font-size:.8rem;cursor:pointer" onclick="doLogout()">Sair</button></div></div>`:'';
   const desp=await getDesp();
   const isD=window.innerWidth>=900;
@@ -734,6 +747,7 @@ async function renderDash(){
     html+=`</div>`;
   }
   el.innerHTML=html;
+  } catch(e){console.error("renderDash",e);el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar. Tenta recarregar.</div>';}
 }
 
 // ── DESPESAS ──────────────────────────────────────────────────────────────
