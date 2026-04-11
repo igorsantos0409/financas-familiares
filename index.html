@@ -519,8 +519,17 @@ function tipoTag(t) {
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 async function init() {
-  const {data:{session}} = await sb.auth.getSession();
-  if(session){user=session.user; await boot();}
+  try {
+    const {data:{session}, error} = await sb.auth.getSession();
+    if (error) {
+      // Token inválido — limpa e mostra login
+      await sb.auth.signOut();
+      return;
+    }
+    if(session){user=session.user; await boot();}
+  } catch(e) {
+    console.error('Init error:', e);
+  }
   sb.auth.onAuthStateChange((_,s)=>{if(s&&!user){user=s.user;boot();}});
 }
 
@@ -548,16 +557,25 @@ document.getElementById('l-pass').addEventListener('keypress',e=>{if(e.key==='En
 
 // ── BOOTSTRAP ─────────────────────────────────────────────────────────────
 async function boot(){
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('app').classList.add('visible');
-  const nome=user.email.split('@')[0];
-  document.getElementById('u-av').textContent=nome[0].toUpperCase();
-  document.getElementById('u-nm').textContent=nome.charAt(0).toUpperCase()+nome.slice(1);
-  document.getElementById('u-dt').textContent=new Date().toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'});
-  updateM();
-  setupDesktop();
-  await Promise.all([loadCats(),loadOrc(),loadR()]);
-  renderDash();
+  try {
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    const nome=user.email.split('@')[0];
+    document.getElementById('u-av').textContent=nome[0].toUpperCase();
+    document.getElementById('u-nm').textContent=nome.charAt(0).toUpperCase()+nome.slice(1);
+    document.getElementById('u-dt').textContent=new Date().toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'});
+    updateM();
+    setupDesktop();
+    await Promise.all([loadCats(),loadOrc(),loadR()]);
+    renderDash();
+  } catch(e) {
+    console.error('Boot error:', e);
+    // Se falhar, volta ao login
+    user = null;
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('auth-screen').style.display='flex';
+    showErr('Erro ao carregar. Tenta fazer login novamente.');
+  }
 }
 
 function setupDesktop() {
@@ -1331,10 +1349,12 @@ let _allObjetivos = [];
 let _activeObjId = null; // objetivo selecionado para ver detalhes
 
 async function loadObjetivos() {
-  const { data } = await sb.from('objetivos').select('*').eq('ativo', true).order('created_at');
-  _allObjetivos = data || [];
-  // Se não há objetivos, criar o do casamento automaticamente
-  if (!_allObjetivos.length) await criarObjetivoCasamento();
+  try {
+    const { data, error } = await sb.from('objetivos').select('*').eq('ativo', true).order('created_at');
+    if (error) { _allObjetivos = []; return; }
+    _allObjetivos = data || [];
+    if (!_allObjetivos.length) await criarObjetivoCasamento();
+  } catch(e) { _allObjetivos = []; }
 }
 
 async function criarObjetivoCasamento() {
@@ -1347,11 +1367,14 @@ async function criarObjetivoCasamento() {
 }
 
 async function loadContribuicoesObj(objId) {
-  const { data } = await sb.from('poupancas')
-    .select('*').eq('tipo', 'entrada')
-    .eq('objetivo_id', objId)
-    .order('created_at', { ascending: false });
-  return data || [];
+  try {
+    const { data, error } = await sb.from('poupancas')
+      .select('*').eq('tipo', 'entrada')
+      .eq('objetivo_id', objId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return data || [];
+  } catch(e) { return []; }
 }
 
 async function loadContribuicoes() {
@@ -1378,16 +1401,25 @@ async function renderObjetivos() {
 
   await loadObjetivos();
 
+  if (!_allObjetivos.length) {
+    el.innerHTML = _deskH + `<div class="warn-box" style="margin-top:1rem">
+      ⚠️ <strong>Tabela de objetivos não encontrada.</strong><br>
+      Corre o ficheiro <strong>1.sql</strong> no Supabase SQL Editor para criar a tabela de objetivos.
+      Depois recarrega a página.
+    </div>`;
+    return;
+  }
+
   // Load contributions for all objetivos
   const contribsMap = {};
   await Promise.all(_allObjetivos.map(async o => {
     const cs = await loadContribuicoesObj(o.id);
-    contribsMap[o.id] = cs;
+    contribsMap[o.id] = cs || [];
   }));
 
   // Tabs
   const tabsHtml = _allObjetivos.map((o,i) => {
-    const total = contribsMap[o.id].reduce((s,c) => s+parseFloat(c.valor), 0);
+    const total = (contribsMap[o.id]||[]).reduce((s,c) => s+parseFloat(c.valor), 0);
     const pct   = Math.min((total/o.meta)*100,100);
     return `<div class="obj-tab ${i===0?'active':''}" id="tab-${o.id}" onclick="switchObjTab('${o.id}')">${o.emoji} ${o.nome} ${Math.round(pct)}%</div>`;
   }).join('');
