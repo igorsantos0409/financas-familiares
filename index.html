@@ -519,18 +519,15 @@ function tipoTag(t) {
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 async function init() {
+  let booted = false;
   try {
     const {data:{session}, error} = await sb.auth.getSession();
-    if (error) {
-      // Token inválido — limpa e mostra login
-      await sb.auth.signOut();
-      return;
-    }
-    if(session){user=session.user; await boot();}
-  } catch(e) {
-    console.error('Init error:', e);
-  }
-  sb.auth.onAuthStateChange((_,s)=>{if(s&&!user){user=s.user;boot();}});
+    if (error) { await sb.auth.signOut(); return; }
+    if(session){ user=session.user; booted=true; await boot(); }
+  } catch(e) { console.error('Init error:', e); }
+  sb.auth.onAuthStateChange((_,s)=>{
+    if(s && !booted){ booted=true; user=s.user; boot(); }
+  });
 }
 
 async function doLogin() {
@@ -570,7 +567,7 @@ async function boot(){
     const _t = new Promise((_,rej) => setTimeout(()=>rej('timeout'),8000));
     try { await Promise.race([Promise.all([loadCats(),loadOrc(),loadR()]),_t]); }
     catch(te){ console.warn('Load timeout:',te); }
-    renderDash();
+    nav('dashboard');
   } catch(e) {
     console.error('Boot error:', e);
     // Se falhar, volta ao login
