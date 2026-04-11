@@ -748,6 +748,13 @@ async function renderDash(){
   }
   el.innerHTML=html;
   } catch(e){console.error("renderDash",e);el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar. Tenta recarregar.</div>';}
+  // Garantir que o dashboard fica visível após renderizar
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const _dn=document.querySelector('[data-p="dashboard"]');
+  if(_dn) _dn.classList.add('active');
+  document.getElementById('fab').style.display='flex';
 }
 
 // ── DESPESAS ──────────────────────────────────────────────────────────────
