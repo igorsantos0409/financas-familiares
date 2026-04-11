@@ -293,6 +293,33 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .autocomplete-item:hover{background:var(--surface3)}
 .autocomplete-item-name{color:var(--text)}
 .autocomplete-item-cat{font-size:.68rem;color:var(--text3)}
+.cfg-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.75rem;overflow:hidden}
+.cfg-hdr{padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.cfg-title{font-size:.9rem;font-weight:600}
+.cfg-items{padding:.5rem}
+.cfg-row{display:flex;align-items:center;gap:.75rem;padding:.5rem .5rem;border-bottom:0.5px solid var(--border)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-row-label{flex:1;font-size:.85rem}
+.cfg-row-sub{font-size:.7rem;color:var(--text3)}
+.cfg-input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.4rem .65rem;color:var(--text);font-size:.88rem;width:100px;text-align:right;transition:border-color .2s}
+.cfg-input:focus{outline:none;border-color:var(--accent)}
+.btn-cfg-save{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:.4rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-cfg-save:hover{background:var(--accent2)}
+.btn-cfg-del{background:none;border:none;color:var(--text3);font-size:.9rem;cursor:pointer;padding:.2rem .35rem;border-radius:4px}
+.btn-cfg-del:hover{color:var(--red)}
+.obj-create-card{background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem}
+.obj-create-title{font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.75rem}
+.obj-create-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.75rem}
+.obj-create-field{display:flex;flex-direction:column;gap:.25rem}
+.obj-create-field.full{grid-column:1/-1}
+.obj-create-field label{font-size:.7rem;color:var(--text3);font-weight:500}
+.obj-create-field input,.obj-create-field select{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem .7rem;color:var(--text);font-size:.85rem}
+.obj-create-field input:focus,.obj-create-field select:focus{outline:none;border-color:var(--purple)}
+.obj-tabs{display:flex;gap:.5rem;margin-bottom:1rem;overflow-x:auto;padding-bottom:.25rem}
+.obj-tab{background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.35rem .85rem;font-size:.78rem;font-weight:500;color:var(--text3);cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.obj-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.obj-list-grid{display:flex;flex-direction:column;gap:.75rem}
+@media(min-width:900px){.obj-list-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}}
 </style>
 </head>
 <body>
@@ -337,7 +364,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
     <div class="page" id="page-graficos"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
     <div class="page" id="page-dicas"><div class="loading"><div class="spinner"></div>A calcular…</div></div>
     <div class="page" id="page-objetivos"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
-    <div class="page" id="page-objetivos"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
+    <div class="page" id="page-config"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
   </div>
 
   <nav class="bottom-nav" id="main-nav">
@@ -352,6 +379,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
     <button class="nav-item" data-p="graficos" onclick="nav('graficos')"><span class="nav-icon">📊</span>Gráficos</button>
     <button class="nav-item" data-p="objetivos" onclick="nav('objetivos')"><span class="nav-icon">🎯</span>Objetivos</button>
     <button class="nav-item" data-p="dicas" onclick="nav('dicas')"><span class="nav-icon">💡</span>Dicas</button>
+    <button class="nav-item" data-p="config" onclick="nav('config')"><span class="nav-icon">⚙️</span>Config</button>
     <div style="flex:1"></div>
     <div class="nav-item nav-logout" id="nav-logout" style="display:none;margin-top:auto" onclick="doLogout()"><span class="nav-icon">⎋</span>Sair</div>
   </nav>
@@ -1174,24 +1202,24 @@ function updateCustomCenario() {
 // Global para o cenário custom ter acesso ao valor falta
 let _objFalta = 0;
 
-async function saveContrib() {
-  const tipo  = document.getElementById('obj-tipo').value;
-  const val   = parseFloat(document.getElementById('obj-val').value);
-  const mes_c = parseInt(document.getElementById('obj-mes').value);
-  const ano_c = parseInt(document.getElementById('obj-ano').value);
-  const nota  = document.getElementById('obj-nota').value.trim();
+async function saveContrib(objId) {
+  const tipo  = document.getElementById('ob-tipo')?.value || 'mensal';
+  const val   = parseFloat(document.getElementById('ob-val')?.value);
+  const nota  = document.getElementById('ob-nota')?.value.trim();
   if (!val || val <= 0) { showToast('Introduz um valor válido', 'error'); return; }
-  const btn = document.getElementById('obj-save');
-  btn.disabled = true; btn.textContent = 'A guardar…';
+  const btn = document.querySelector('.btn-obj');
+  if (btn) { btn.disabled = true; }
+  const tipoLabel = { mensal:'Poupança mensal', subsidio_ferias:'Subsídio de férias',
+    subsidio_natal:'Subsídio de Natal', comissao:'Comissões', extra:'Extra' }[tipo] || tipo;
   const { error } = await sb.from('poupancas').insert({
-    user_id: user.id, ano: ano_c, mes: mes_c,
-    descricao: tipo, nota: nota || null,
-    valor: val, tipo: 'entrada', objetivo: 'casamento'
+    user_id: user.id, ano, mes, descricao: nota || tipoLabel,
+    valor: val, tipo: 'entrada', objetivo_id: objId || null
   });
-  btn.disabled = false; btn.textContent = '💾 Guardar';
+  if (btn) { btn.disabled = false; }
   if (error) { showToast('Erro: ' + error.message, 'error'); return; }
-  showToast('Contribuição guardada ✓', 'success');
-  closeObj();
+  showToast('Depósito registado! ✓', 'success');
+  if (document.getElementById('ob-val')) document.getElementById('ob-val').value = '';
+  if (document.getElementById('ob-nota')) document.getElementById('ob-nota').value = '';
   renderObjetivos();
 }
 
@@ -1201,6 +1229,415 @@ async function delContrib(id) {
   showToast('Apagado ✓', 'success');
   renderObjetivos();
 }
+
+// ══════════════════════════════════════════════════════════════
+// CONFIGURAÇÕES — EDIÇÃO DE ORÇAMENTO
+// ══════════════════════════════════════════════════════════════
+async function renderConfig() {
+  const el = document.getElementById('page-config');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>A carregar…</div>';
+  const isD = window.innerWidth >= 900;
+  const _deskH = isD ? `<div class="desktop-header"><h2>⚙️ Configurações</h2><div class="desktop-header-right"><div class="month-nav-desktop"><button class="month-btn-d" onclick="changeMonth(-1)">‹</button><span class="month-lbl-d">${MESES[mes-1]} ${ano}</span><button class="month-btn-d" onclick="changeMonth(1)">›</button></div></div></div>` : '';
+
+  if (!cats.length) await loadCats();
+  if (!orcamento.length) await loadOrc();
+
+  // Group orcamento by category
+  const orcByCat = {};
+  orcamento.forEach(o => {
+    if (!orcByCat[o.categoria_id]) orcByCat[o.categoria_id] = [];
+    orcByCat[o.categoria_id].push(o);
+  });
+
+  let html = _deskH + `<div class="stitle">Orçamento mensal — ${MESES[mes-1]} ${ano}</div>
+  <div style="font-size:.78rem;color:var(--text3);margin-bottom:1rem;line-height:1.5">
+    Edita os valores orçados para este mês. As alterações aplicam-se apenas ao mês selecionado.
+  </div>`;
+
+  cats.forEach(cat => {
+    const items = orcByCat[cat.id] || [];
+    const total = items.reduce((s,o) => s + parseFloat(o.valor_orcado), 0);
+    html += `<div class="cfg-section">
+      <div class="cfg-hdr">
+        <div class="cfg-title">${cat.icone} ${cat.nome}</div>
+        <span style="font-size:.78rem;color:var(--text3);font-weight:600">${fmt(total)}</span>
+      </div>
+      <div class="cfg-items">`;
+
+    items.forEach(o => {
+      html += `<div class="cfg-row">
+        <div style="flex:1">
+          <div class="cfg-row-label">${o.subcategoria}</div>
+        </div>
+        <input class="cfg-input" type="number" min="0" step="0.01" value="${parseFloat(o.valor_orcado).toFixed(2)}" id="orc-${o.id}">
+        <button class="btn-cfg-save" onclick="saveOrcItem('${o.id}')">✓</button>
+        <button class="btn-cfg-del" onclick="delOrcItem('${o.id}')">🗑</button>
+      </div>`;
+    });
+
+    // Add new subcategoria row
+    html += `<div class="cfg-row" style="background:rgba(79,142,247,.04)">
+      <input style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.4rem .65rem;color:var(--text);font-size:.82rem;margin-right:.5rem" 
+        type="text" placeholder="Nova subcategoria…" id="new-sub-${cat.id}">
+      <input class="cfg-input" type="number" min="0" step="0.01" placeholder="0,00" id="new-val-${cat.id}">
+      <button class="btn-cfg-save" onclick="addOrcItem(${cat.id})">+</button>
+    </div>`;
+
+    html += `</div></div>`;
+  });
+
+  html += `<div style="height:1rem"></div>`;
+  el.innerHTML = html;
+}
+
+async function saveOrcItem(id) {
+  const input = document.getElementById('orc-' + id);
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0) { showToast('Valor inválido', 'error'); return; }
+  const { error } = await sb.from('orcamento').update({ valor_orcado: val }).eq('id', id);
+  if (error) { showToast('Erro: ' + error.message, 'error'); return; }
+  await loadOrc();
+  showToast('Guardado ✓', 'success');
+  input.style.borderColor = 'var(--green)';
+  setTimeout(() => input.style.borderColor = '', 1500);
+}
+
+async function delOrcItem(id) {
+  if (!confirm('Apagar esta linha do orçamento?')) return;
+  await sb.from('orcamento').delete().eq('id', id);
+  await loadOrc();
+  showToast('Apagado', 'success');
+  renderConfig();
+}
+
+async function addOrcItem(catId) {
+  const sub = document.getElementById('new-sub-' + catId)?.value.trim();
+  const val = parseFloat(document.getElementById('new-val-' + catId)?.value);
+  if (!sub) { showToast('Escreve o nome da subcategoria', 'error'); return; }
+  if (isNaN(val) || val < 0) { showToast('Valor inválido', 'error'); return; }
+  const { error } = await sb.from('orcamento').insert({
+    user_id: user.id, ano, mes, categoria_id: catId, subcategoria: sub, valor_orcado: val
+  });
+  if (error) { showToast('Erro: ' + error.message, 'error'); return; }
+  await loadOrc();
+  showToast('Adicionado ✓', 'success');
+  renderConfig();
+}
+
+// ══════════════════════════════════════════════════════════════
+// OBJETIVOS MÚLTIPLOS
+// ══════════════════════════════════════════════════════════════
+let _allObjetivos = [];
+let _activeObjId = null; // objetivo selecionado para ver detalhes
+
+async function loadObjetivos() {
+  const { data } = await sb.from('objetivos').select('*').eq('ativo', true).order('created_at');
+  _allObjetivos = data || [];
+  // Se não há objetivos, criar o do casamento automaticamente
+  if (!_allObjetivos.length) await criarObjetivoCasamento();
+}
+
+async function criarObjetivoCasamento() {
+  const { data } = await sb.from('objetivos').insert({
+    user_id: user.id, nome: 'Casamento', emoji: '💍',
+    meta: 25000, cor: 'gold',
+    data_alvo: '2028-06-01', ativo: true
+  }).select();
+  if (data) _allObjetivos = data;
+}
+
+async function loadContribuicoesObj(objId) {
+  const { data } = await sb.from('poupancas')
+    .select('*').eq('tipo', 'entrada')
+    .eq('objetivo_id', objId)
+    .order('created_at', { ascending: false });
+  return data || [];
+}
+
+async function loadContribuicoes() {
+  // backwards compat — load for first objetivo (casamento)
+  if (!_allObjetivos.length) await loadObjetivos();
+  const obj = _allObjetivos[0];
+  if (!obj) return [];
+  return loadContribuicoesObj(obj.id);
+}
+
+const COR_MAP = {
+  gold:   { bg: 'rgba(245,158,11,.08)', border: 'rgba(245,158,11,.35)', text: 'var(--gold)',   bar: 'gold' },
+  accent: { bg: 'rgba(79,142,247,.08)', border: 'rgba(79,142,247,.35)', text: 'var(--accent)', bar: '' },
+  green:  { bg: 'rgba(46,204,113,.08)', border: 'rgba(46,204,113,.35)', text: 'var(--green)',  bar: 'green' },
+  purple: { bg: 'rgba(139,92,246,.08)', border: 'rgba(139,92,246,.35)', text: 'var(--purple)', bar: '' },
+  red:    { bg: 'rgba(231,76,60,.08)',  border: 'rgba(231,76,60,.35)',  text: 'var(--red)',    bar: '' },
+};
+
+async function renderObjetivos() {
+  const el = document.getElementById('page-objetivos');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>A carregar…</div>';
+  const isD = window.innerWidth >= 900;
+  const _deskH = isD ? `<div class="desktop-header"><h2>🎯 Objetivos</h2><div class="desktop-header-right"><div class="month-nav-desktop"><button class="month-btn-d" onclick="changeMonth(-1)">‹</button><span class="month-lbl-d">${MESES[mes-1]} ${ano}</span><button class="month-btn-d" onclick="changeMonth(1)">›</button></div></div></div>` : '';
+
+  await loadObjetivos();
+
+  // Load contributions for all objetivos
+  const contribsMap = {};
+  await Promise.all(_allObjetivos.map(async o => {
+    const cs = await loadContribuicoesObj(o.id);
+    contribsMap[o.id] = cs;
+  }));
+
+  // Tabs
+  const tabsHtml = _allObjetivos.map((o,i) => {
+    const total = contribsMap[o.id].reduce((s,c) => s+parseFloat(c.valor), 0);
+    const pct   = Math.min((total/o.meta)*100,100);
+    return `<div class="obj-tab ${i===0?'active':''}" id="tab-${o.id}" onclick="switchObjTab('${o.id}')">${o.emoji} ${o.nome} ${Math.round(pct)}%</div>`;
+  }).join('');
+
+  // Active objetivo (first by default)
+  if (!_activeObjId || !_allObjetivos.find(o=>o.id===_activeObjId)) {
+    _activeObjId = _allObjetivos[0]?.id;
+  }
+
+  let html = _deskH;
+  html += `<div class="obj-tabs" id="obj-tabs">${tabsHtml}<div class="obj-tab" onclick="showCreateObj()" style="border-style:dashed">+ Novo</div></div>`;
+  html += `<div id="obj-detail"></div>`;
+
+  // Create form (hidden by default)
+  html += `<div id="obj-create-wrap" style="display:none">
+    <div class="obj-create-card">
+      <div class="obj-create-title">✨ Novo objetivo</div>
+      <div class="obj-create-grid">
+        <div class="obj-create-field"><label>Emoji</label>
+          <input type="text" id="oc-emoji" maxlength="2" placeholder="🎯" value="🎯"></div>
+        <div class="obj-create-field"><label>Cor</label>
+          <select id="oc-cor">
+            <option value="accent">🔵 Azul</option>
+            <option value="gold">🟡 Dourado</option>
+            <option value="green">🟢 Verde</option>
+            <option value="purple">🟣 Roxo</option>
+            <option value="red">🔴 Vermelho</option>
+          </select></div>
+        <div class="obj-create-field full"><label>Nome</label>
+          <input type="text" id="oc-nome" placeholder="ex: Férias, Carro novo…"></div>
+        <div class="obj-create-field"><label>Meta (€)</label>
+          <input type="number" id="oc-meta" min="1" step="100" placeholder="5000"></div>
+        <div class="obj-create-field"><label>Data alvo (opcional)</label>
+          <input type="date" id="oc-data"></div>
+      </div>
+      <div style="display:flex;gap:.75rem">
+        <button class="btn-cancel" onclick="hideCreateObj()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem;font-size:.85rem;color:var(--text2);cursor:pointer">Cancelar</button>
+        <button class="btn-save" onclick="criarObj()" style="flex:2">✨ Criar objetivo</button>
+      </div>
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+
+  // Render active objetivo detail
+  if (_activeObjId) renderObjDetail(_activeObjId, contribsMap);
+}
+
+function switchObjTab(id) {
+  _activeObjId = id;
+  document.querySelectorAll('.obj-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-' + id);
+  if (tab) tab.classList.add('active');
+  // Reload detail
+  loadObjetivos().then(async () => {
+    const contribsMap = {};
+    await Promise.all(_allObjetivos.map(async o => {
+      contribsMap[o.id] = await loadContribuicoesObj(o.id);
+    }));
+    renderObjDetail(id, contribsMap);
+  });
+}
+
+function showCreateObj() {
+  document.getElementById('obj-create-wrap').style.display = 'block';
+  document.getElementById('obj-detail').style.display = 'none';
+}
+function hideCreateObj() {
+  document.getElementById('obj-create-wrap').style.display = 'none';
+  document.getElementById('obj-detail').style.display = 'block';
+}
+
+async function criarObj() {
+  const nome   = document.getElementById('oc-nome').value.trim();
+  const emoji  = document.getElementById('oc-emoji').value.trim() || '🎯';
+  const meta   = parseFloat(document.getElementById('oc-meta').value);
+  const cor    = document.getElementById('oc-cor').value;
+  const data_a = document.getElementById('oc-data').value || null;
+  if (!nome) { showToast('Dá um nome ao objetivo', 'error'); return; }
+  if (!meta || meta <= 0) { showToast('Define uma meta válida', 'error'); return; }
+  const { error } = await sb.from('objetivos').insert({
+    user_id: user.id, nome, emoji, meta, cor, data_alvo: data_a, ativo: true
+  });
+  if (error) { showToast('Erro: ' + error.message, 'error'); return; }
+  showToast('Objetivo criado! ✓', 'success');
+  renderObjetivos();
+}
+
+async function apagarObj(id) {
+  if (!confirm('Apagar este objetivo e todas as contribuições?')) return;
+  await sb.from('poupancas').delete().eq('objetivo_id', id);
+  await sb.from('objetivos').delete().eq('id', id);
+  _activeObjId = null;
+  showToast('Objetivo apagado', 'success');
+  renderObjetivos();
+}
+
+function renderObjDetail(objId, contribsMap) {
+  const obj     = _allObjetivos.find(o => o.id === objId);
+  const contribs = contribsMap[objId] || [];
+  const detail   = document.getElementById('obj-detail');
+  if (!obj || !detail) return;
+
+  const total  = contribs.reduce((s,c) => s+parseFloat(c.valor), 0);
+  const meta   = parseFloat(obj.meta);
+  const falta  = Math.max(0, meta - total);
+  const pct    = Math.min((total/meta)*100, 100);
+  const cores  = COR_MAP[obj.cor] || COR_MAP.accent;
+  _objFalta    = falta;
+
+  const hoje   = new Date();
+  const dataA  = obj.data_alvo ? new Date(obj.data_alvo) : null;
+  const mesesR = dataA ? Math.max(0, (dataA.getFullYear()-hoje.getFullYear())*12+(dataA.getMonth()-hoje.getMonth())) : null;
+  const precisa = (mesesR && falta > 0) ? falta/mesesR : 0;
+
+  const milestones = [
+    { val: meta*0.1,  label: `Primeiros 10% 🎉` },
+    { val: meta*0.25, label: `25% concluído` },
+    { val: meta*0.5,  label: `Metade do caminho 🥂` },
+    { val: meta*0.75, label: `75% — quase lá!` },
+    { val: meta,      label: `${obj.emoji} Objetivo alcançado!` },
+  ];
+
+  let html = `<div style="background:${cores.bg};border:1px solid ${cores.border};border-radius:var(--radius);padding:1.2rem;margin-bottom:.75rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+      <div>
+        <div style="font-size:1.8rem;margin-bottom:.2rem">${obj.emoji}</div>
+        <div style="font-size:1rem;font-weight:700">${obj.nome}</div>
+        <div style="font-size:.72rem;color:var(--text3)">Meta: ${fmt(meta)}${dataA?` · Alvo: ${dataA.toLocaleDateString('pt-PT',{month:'long',year:'numeric'})}`:''}</div>
+      </div>
+      <button class="btn-cfg-del" onclick="apagarObj('${obj.id}')" style="font-size:1.1rem" title="Apagar objetivo">🗑</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);margin-bottom:.3rem">
+      <span>${fmt(total)} poupados</span><span>${Math.round(pct)}%</span>
+    </div>
+    <div class="obj-bar-track"><div class="obj-bar-fill ${obj.cor==='gold'?'gold':obj.cor==='green'?'green':''}" style="width:${pct}%;background:${!obj.cor||obj.cor==='accent'?'var(--accent)':obj.cor==='purple'?'var(--purple)':obj.cor==='red'?'var(--red)':''}"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text3);margin-top:.25rem">
+      <span>Faltam ${fmt(falta)}</span>
+      ${precisa>0?`<span>~${fmt(precisa)}/mês necessários</span>`:''}
+    </div>
+  </div>`;
+
+  // Stats
+  html += `<div class="obj-stats" style="margin-bottom:.75rem">
+    <div class="obj-stat"><div class="obj-stat-lbl">Poupado</div><div class="obj-stat-val" style="color:${cores.text}">${fmt(total)}</div></div>
+    <div class="obj-stat"><div class="obj-stat-lbl">Falta</div><div class="obj-stat-val accent">${fmt(falta)}</div></div>
+    <div class="obj-stat"><div class="obj-stat-lbl">${mesesR!==null?'Meses':'Depósitos'}</div><div class="obj-stat-val">${mesesR!==null?mesesR:contribs.length}</div></div>
+  </div>`;
+
+  // Milestones
+  html += `<div class="obj-card" style="margin-bottom:.75rem">
+    <div style="font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.6rem">📍 Marcos</div>`;
+  milestones.forEach(m => {
+    const done   = total >= m.val;
+    const active = !done && total >= m.val*0.7;
+    html += `<div class="milestone ${done?'done':active?'active':''}">
+      <div class="milestone-dot"></div>
+      <span>${m.label}</span>
+      <span style="margin-left:auto;font-size:.72rem">${fmt(m.val)}</span>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Cenários (só se tiver data alvo)
+  if (dataA) {
+    html += `<div class="obj-card" style="margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.75rem">📊 Cenários para atingir a meta</div>`;
+    CENARIOS.forEach(c => {
+      const totalAno = c.mensal*12 + c.subsidios;
+      const meses2   = falta>0 ? Math.ceil(falta/(totalAno/12)) : 0;
+      const chegada  = new Date(); chegada.setMonth(chegada.getMonth()+meses2);
+      const antes    = chegada <= dataA;
+      html += `<div class="obj-cenario">
+        <div class="obj-cenario-title" style="color:${c.cor}">${c.label}</div>
+        <div class="obj-cenario-row"><span>Poupança mensal</span><span class="obj-cenario-val">${fmt(c.mensal)}/mês</span></div>
+        ${c.subsidios>0?`<div class="obj-cenario-row"><span>+ Subsídios/ano</span><span class="obj-cenario-val">${fmt(c.subsidios)}</span></div>`:''}
+        <div class="obj-cenario-row"><span>Chegam em</span><span class="obj-cenario-val" style="color:${antes?'var(--green)':'var(--amber)'}">${chegada.toLocaleDateString('pt-PT',{month:'long',year:'numeric'})} ${antes?'✓':'⚠'}</span></div>
+      </div>`;
+    });
+
+    // Custom slider
+    html += `<div class="obj-cenario custom" id="cenario-custom">
+      <div class="obj-cenario-title">✏️ Personalizado</div>
+      <div class="custom-slider-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.3rem">
+          <span style="color:var(--text3)">Poupança mensal</span>
+          <span style="color:var(--purple);font-weight:700" id="custom-val-lbl">300 €/mês</span>
+        </div>
+        <input type="range" class="custom-slider" id="custom-slider" min="100" max="1000" step="25" value="300" oninput="updateCustomCenario()">
+        <div class="custom-slider-labels"><span>100 €</span><span>550 €</span><span>1.000 €</span></div>
+      </div>
+      <div style="margin:.5rem 0">
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.3rem">
+          <span style="color:var(--text3)">Subsídios anuais</span>
+          <span style="color:var(--purple);font-weight:700" id="custom-sub-lbl">0 €</span>
+        </div>
+        <input type="range" class="custom-slider" id="custom-sub-slider" min="0" max="10000" step="100" value="0" oninput="updateCustomCenario()">
+        <div class="custom-slider-labels"><span>0 €</span><span>5.000 €</span><span>10.000 €</span></div>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:.3rem">💡 Ajusta com base nos subsídios que esperas receber.</div>
+      </div>
+      <div id="custom-result"></div>
+    </div>`;
+    html += `</div>`;
+    setTimeout(updateCustomCenario, 50);
+  }
+
+  // Registar depósito
+  html += `<div class="obj-card" style="margin-bottom:.75rem">
+    <div style="font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.75rem">➕ Registar depósito</div>
+    <div class="obj-input-row"><label>Tipo</label>
+      <select id="ob-tipo" class="obj-input">
+        <option value="mensal">Poupança mensal</option>
+        <option value="subsidio_ferias">Subsídio de férias</option>
+        <option value="subsidio_natal">Subsídio de Natal</option>
+        <option value="comissao">Comissões</option>
+        <option value="extra">Extra / oferta</option>
+      </select></div>
+    <div class="obj-input-row"><label>Valor (€)</label>
+      <input type="number" id="ob-val" class="obj-input" min="0" step="10" placeholder="0,00"></div>
+    <div class="obj-input-row"><label>Nota (opcional)</label>
+      <input type="text" id="ob-nota" class="obj-input" placeholder="ex: subsídio junho…"></div>
+    <button class="btn-obj" onclick="saveContrib('${obj.id}')" style="width:100%;margin-top:.25rem">${obj.emoji} Adicionar a ${obj.nome}</button>
+  </div>`;
+
+  // Histórico
+  if (contribs.length) {
+    html += `<div class="obj-card" style="margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.75rem">📋 Histórico</div>
+      <div class="obj-contrib-list">`;
+    contribs.slice(0,20).forEach(c => {
+      const data = new Date(c.created_at).toLocaleDateString('pt-PT',{day:'numeric',month:'short',year:'numeric'});
+      html += `<div class="obj-contrib-item">
+        <div class="obj-contrib-left"><div>
+          <div>${c.descricao||c.tipo||'Depósito'}</div>
+          <div class="obj-contrib-tipo">${data}</div>
+        </div></div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="obj-contrib-val">+${fmt(c.valor)}</span>
+          ${c.user_id===user?.id?`<button class="obj-contrib-del" onclick="delContrib('${c.id}')">🗑</button>`:''}
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  html += `<div style="height:1rem"></div>`;
+  detail.innerHTML = html;
+}
+
+
 
 function showToast(msg,type='success'){
   const t=document.getElementById('toast');
