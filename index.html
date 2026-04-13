@@ -1088,39 +1088,235 @@ async function renderDicas(){
   el.innerHTML='<div class="loading"><div class="spinner"></div>A calcular…</div>';
   if(!cats.length) await loadCats();
   if(!orcamento.length) await loadOrc();
-  const desp=await getDesp();
-  const _deskH=window.innerWidth>=900?`<div class="desktop-header"><h2>Dicas Financeiras</h2><div class="desktop-header-right"><div class="month-nav-desktop"><button class="month-btn-d" onclick="changeMonth(-1)">‹</button><span class="month-lbl-d" id="mlbl-d">${MESES[mes-1]} ${ano}</span><button class="month-btn-d" onclick="changeMonth(1)">›</button></div><button style="background:none;border:1px solid var(--border);color:var(--text3);border-radius:var(--radius-sm);padding:.3rem .7rem;font-size:.8rem;cursor:pointer" onclick="doLogout()">Sair</button></div></div>`:'';
-  const tR=totalRends(),tO=totalOrc();
-  const tG=desp.reduce((s,d)=>s+parseFloat(d.valor),0);
-  const saldo=tR-tG;
-  const diasM=new Date(ano,mes,0).getDate();
-  const diaA=(ano===new Date().getFullYear()&&mes===new Date().getMonth()+1)?new Date().getDate():diasM;
-  const proj=diaA>0?(tG/diaA)*diasM:0;
-  const porCat={},orcCat={};
-  desp.forEach(d=>{const n=getCatNome(d.categoria_id);porCat[n]=(porCat[n]||0)+parseFloat(d.valor);});
-  orcamento.forEach(o=>{const n=getCatNome(o.categoria_id);orcCat[n]=(orcCat[n]||0)+parseFloat(o.valor_orcado);});
-  const igor=rends.filter(r=>r.nome_pessoa==='igor');
-  const tIgor=igor.reduce((s,r)=>s+parseFloat(r.valor),0);
-  let ds=[];
-  if(tR===0){
-    ds.push({t:'amber',i:'⚠️',ti:'Rendimentos não introduzidos',tx:`Vai ao separador Rendimentos para introduzir os salários de ${MESES[mes-1]}. Sem isso não é possível calcular o saldo real nem as dicas financeiras.`});
-  } else {
-    if(saldo>=0) ds.push({t:'verde',i:'✅',ti:'Orçamento equilibrado',tx:`Têm ${fmt(saldo)} de saldo este mês. ${saldo>500?'Excelente — considerem reforçar as poupanças.':'Dentro do esperado.'}`});
-    else ds.push({t:'vermelho',i:'🔴',ti:'A exceder o orçamento',tx:`Estão ${fmt(Math.abs(saldo))} acima do rendimento. Revejam as categorias com maior desvio e adiem gastos não essenciais.`});
-    if(proj>tO*1.05) ds.push({t:'amber',i:'📈',ti:'Projeção acima do orçado',tx:`Ao ritmo atual irão gastar ${fmt(proj)} em ${MESES[mes-1]}, ${fmt(proj-tO)} acima do orçado.`});
-    ds.push({t:'azul',i:'💡',ti:'Regra dos 50/30/20',tx:`Com ${fmt(tR)} de rendimento: Necessidades (50%) = ${fmt(tR*.5)} · Desejos (30%) = ${fmt(tR*.3)} · Poupança (20%) = ${fmt(tR*.2)}.`});
-    ds.push({t:'roxo',i:'🏦',ti:'Fundo de emergência',tx:`O ideal é ter 3 a 6 meses de despesas em reserva: entre ${fmt(tO*3)} e ${fmt(tO*6)}. Vão lá chegar progressivamente com o cofrinho mensal.`});
-    if(tIgor>0) ds.push({t:'amber',i:'🙏',ti:`Dízimo: ${fmt(tIgor*.1)}`,tx:`10% do rendimento real do Igor este mês (${fmt(tIgor)}). Calculado automaticamente a partir do que introduziste em Rendimentos.`});
+
+  const desp    = await getDesp();
+  const despAnt = await getDespMesAnterior();
+  const isD     = window.innerWidth >= 900;
+  const _deskH  = isD ? `<div class="desktop-header"><h2>💡 Dicas Financeiras</h2><div class="desktop-header-right"><div class="month-nav-desktop"><button class="month-btn-d" onclick="changeMonth(-1)">‹</button><span class="month-lbl-d">${MESES[mes-1]} ${ano}</span><button class="month-btn-d" onclick="changeMonth(1)">›</button></div></div></div>` : '';
+
+  const tR   = totalRends();
+  const tO   = totalOrc();
+  const tG   = desp.reduce((s,d)=>s+parseFloat(d.valor),0);
+  const tGAnt= despAnt.reduce((s,d)=>s+parseFloat(d.valor),0);
+  const saldo= tR - tG;
+  const diasM= new Date(ano,mes,0).getDate();
+  const diaA = (ano===new Date().getFullYear()&&mes===new Date().getMonth()+1) ? new Date().getDate() : diasM;
+  const proj = diaA>0 ? (tG/diaA)*diasM : 0;
+  const diasRestantes = diasM - diaA;
+  const saldoDiario = diasRestantes > 0 ? Math.max(0, saldo) / diasRestantes : 0;
+
+  const porCat={}, orcCat={}, porCatAnt={};
+  desp.forEach(d=>{const n=getCatNome(d.categoria_id); porCat[n]=(porCat[n]||0)+parseFloat(d.valor);});
+  orcamento.forEach(o=>{const n=getCatNome(o.categoria_id); orcCat[n]=(orcCat[n]||0)+parseFloat(o.valor_orcado);});
+  despAnt.forEach(d=>{const n=getCatNome(d.categoria_id); porCatAnt[n]=(porCatAnt[n]||0)+parseFloat(d.valor);});
+
+  const igor  = rends.filter(r=>r.nome_pessoa==='igor');
+  const tIgor = igor.reduce((s,r)=>s+parseFloat(r.valor),0);
+
+  // Calcular poupanças nos objetivos este mês
+  let totalPoupMes = 0;
+  if (_allObjetivos.length) {
+    for (const obj of _allObjetivos) {
+      const { data } = await sb.from('poupancas').select('valor').eq('objetivo_id',obj.id).eq('ano',ano).eq('mes',mes);
+      totalPoupMes += (data||[]).reduce((s,p)=>s+parseFloat(p.valor),0);
+    }
   }
-  (cats||[]).forEach(cat=>{
-    const g=porCat[cat.nome]||0,o=orcCat[cat.nome]||0;
-    if(o>0&&g>o) ds.push({t:'vermelho',i:cat.icone,ti:`${cat.nome} acima do orçado`,tx:`Gastaram ${fmt(g)}, ${fmt(g-o)} acima dos ${fmt(o)} orçados.`});
+
+  // Nota / objetivo do mês
+  const notaData = await loadNota();
+  const objMes   = notaData?.obj_mes || '';
+  const objMesVal= parseFloat(notaData?.obj_mes_valor||0);
+
+  let ds = [];
+
+  // ── SECÇÃO 1: ESTADO GERAL ─────────────────────────────────────
+  if (tR === 0) {
+    ds.push({t:'amber', cat:'⚠️ Atenção', i:'⚠️', ti:'Rendimentos não introduzidos',
+      tx:`Vai ao separador <strong>Rendimentos</strong> e introduz os salários de ${MESES[mes-1]}. Sem isso não é possível calcular o saldo real.`});
+  } else {
+    // Saldo
+    if (saldo >= 0) {
+      const poupPct = tR > 0 ? Math.round((saldo/tR)*100) : 0;
+      ds.push({t:'verde', cat:'✅ Estado geral', i:'✅', ti:`Saldo positivo — ${fmt(saldo)}`,
+        tx:`Têm <strong>${fmt(saldo)}</strong> disponíveis este mês (${poupPct}% do rendimento). ${saldo>1000?'Excelente mês — considerem reforçar os objetivos de poupança.':saldo>300?'Dentro do esperado. Bem feito!':'Pouco margem — atenção às despesas inesperadas.'}`});
+    } else {
+      ds.push({t:'vermelho', cat:'🔴 Estado geral', i:'🔴', ti:`A exceder o orçamento — ${fmt(Math.abs(saldo))}`,
+        tx:`Estão <strong>${fmt(Math.abs(saldo))}</strong> acima do rendimento. ${tGAnt>0?`Em ${MESES[mes>1?mes-2:11]} gastaram ${fmt(tGAnt)} — este mês está ${tG>tGAnt?'pior':'melhor'}.`:''} Revejam as categorias com maior desvio.`});
+    }
+
+    // Projeção
+    if (proj > tO * 1.1) {
+      ds.push({t:'amber', cat:'📈 Projeção', i:'📈', ti:`Projeção preocupante — ${fmt(proj)}`,
+        tx:`Ao ritmo atual vão gastar <strong>${fmt(proj)}</strong> em ${MESES[mes-1]}, <strong>${fmt(proj-tO)}</strong> acima do orçado (${fmt(tO)}). Para ficarem dentro do orçamento, podem gastar no máximo <strong>${fmt(saldoDiario)}/dia</strong> nos próximos ${diasRestantes} dias.`});
+    } else if (diaA < diasM && proj < tO * 0.7) {
+      ds.push({t:'verde', cat:'📈 Projeção', i:'📉', ti:`Ritmo de despesas controlado`,
+        tx:`Projeção de ${fmt(proj)} para o mês — bem abaixo do orçado (${fmt(tO)}). Se mantiverem este ritmo, ${fmt(tO-proj)} ficam por gastar.`});
+    }
+
+    // Comparação com mês anterior
+    if (tGAnt > 0) {
+      const diff = tG - tGAnt;
+      const pct  = Math.abs(Math.round((diff/tGAnt)*100));
+      if (Math.abs(diff) > 50) {
+        ds.push({t: diff<0?'verde':'amber', cat:'📊 Comparação', i: diff<0?'📉':'📊',
+          ti: diff<0 ? `${pct}% menos que ${MESES[mes>1?mes-2:11]}` : `${pct}% mais que ${MESES[mes>1?mes-2:11]}`,
+          tx: diff<0
+            ? `Este mês gastaram <strong>${fmt(tG)}</strong> vs <strong>${fmt(tGAnt)}</strong> no mês anterior — pouparam <strong>${fmt(-diff)}</strong> a mais. Boa gestão!`
+            : `Este mês gastaram <strong>${fmt(tG)}</strong> vs <strong>${fmt(tGAnt)}</strong> no mês anterior — <strong>${fmt(diff)}</strong> a mais. Identifiquem onde aumentou.`});
+      }
+    }
+
+    // Saldo diário disponível
+    if (diasRestantes > 0 && saldo > 0) {
+      ds.push({t:'azul', cat:'📅 Dia a dia', i:'📅', ti:`Podem gastar ${fmt(saldoDiario)}/dia`,
+        tx:`Faltam <strong>${diasRestantes} dias</strong> para o fim do mês. Com o saldo atual de <strong>${fmt(saldo)}</strong>, podem gastar até <strong>${fmt(saldoDiario)}</strong> por dia sem ultrapassar o orçamento.`});
+    }
+  }
+
+  // ── SECÇÃO 2: CATEGORIAS ──────────────────────────────────────
+  const catsAcima = [], catsBaixo = [];
+  (cats||[]).forEach(cat => {
+    if (CATS_POSITIVAS.includes(cat.nome)) return;
+    const g = porCat[cat.nome]||0, o = orcCat[cat.nome]||0;
+    if (o <= 0) return;
+    const pct = (g/o)*100;
+    if (g > o)         catsAcima.push({cat, g, o, pct});
+    else if (pct < 20 && diaA > 15) catsBaixo.push({cat, g, o, pct});
   });
-  let html=_deskH+`<div class="stitle">Análise de ${MESES[mes-1]} ${ano}</div>`;
-  ds.map(d=>`<div class="dica ${d.t}"><div class="dica-hdr"><span>${d.i}</span><span class="dica-titulo">${d.ti}</span></div><div class="dica-texto">${d.tx}</div></div>`).forEach(x=>html+=x);
-  html+=`<div style="height:1rem"></div>`;
-  el.innerHTML=html;
+
+  if (catsAcima.length) {
+    catsAcima.sort((a,b)=>b.g-b.o - (a.g-a.o));
+    catsAcima.forEach(({cat,g,o}) => {
+      const excesso = g - o;
+      const gAnt = porCatAnt[cat.nome]||0;
+      const compAnt = gAnt > 0 ? ` Em ${MESES[mes>1?mes-2:11]} gastaram ${fmt(gAnt)} nesta categoria.` : '';
+      ds.push({t:'vermelho', cat:'🏷️ Categorias', i:cat.icone,
+        ti:`${cat.nome} — ${fmt(excesso)} acima do orçado`,
+        tx:`Gastaram <strong>${fmt(g)}</strong> em ${cat.nome}, <strong>${fmt(excesso)}</strong> acima dos ${fmt(o)} orçados (${Math.round((g/o)*100)}%).${compAnt}`});
+    });
+  }
+
+  if (catsBaixo.length && tR > 0) {
+    const nomes = catsBaixo.map(c=>`${c.cat.icone} ${c.cat.nome}`).join(', ');
+    ds.push({t:'verde', cat:'🏷️ Categorias', i:'✨', ti:`Bom controlo em ${catsBaixo.length} categoria${catsBaixo.length>1?'s':''}`,
+      tx:`${nomes} — estão bem abaixo do orçado a meio do mês. Boa gestão nestas áreas!`});
+  }
+
+  // ── SECÇÃO 3: POUPANÇAS E OBJETIVOS ───────────────────────────
+  if (tR > 0) {
+    const poupCat = porCat['Poupança']||0;
+    const poupOrc = orcCat['Poupança']||0;
+    if (poupOrc > 0) {
+      if (poupCat >= poupOrc) {
+        ds.push({t:'verde', cat:'🏦 Poupança', i:'🏦', ti:`Poupança do mês concluída — ${fmt(poupCat)}`,
+          tx:`Excelente! A poupança mensal de <strong>${fmt(poupCat)}</strong> está registada. ${totalPoupMes>0?`Adicionalmente, depositaram <strong>${fmt(totalPoupMes)}</strong> nos objetivos.`:''}`});
+      } else if (poupCat === 0) {
+        ds.push({t:'amber', cat:'🏦 Poupança', i:'🏦', ti:`Poupança ainda não registada`,
+          tx:`O orçamento prevê <strong>${fmt(poupOrc)}</strong> de poupança este mês. Lembrem-se de registar quando a transferirem.`});
+      }
+    }
+
+    if (totalPoupMes > 0 && _allObjetivos.length) {
+      const objsAtivos = _allObjetivos.map(o => {
+        const pct = Math.min(Math.round((o.meta > 0 ? 0 : 0)/o.meta*100), 100);
+        return `${o.emoji} ${o.nome}`;
+      }).join(', ');
+      ds.push({t:'roxo', cat:'🎯 Objetivos', i:'🎯', ti:`${fmt(totalPoupMes)} depositados nos objetivos`,
+        tx:`Este mês depositaram <strong>${fmt(totalPoupMes)}</strong> nos vossos objetivos de poupança. Continuem assim — a consistência é a chave!`});
+    }
+
+    // Objetivo do mês
+    if (objMes && objMesVal > 0) {
+      const resto = objMesVal - tG;
+      const ok = tG <= objMesVal;
+      ds.push({t: ok?'verde':'vermelho', cat:'🎯 Objetivo do mês', i:'🎯',
+        ti: ok ? `Objetivo do mês em curso ✓` : `Objetivo do mês ultrapassado`,
+        tx: ok
+          ? `"${objMes}" — gastaram <strong>${fmt(tG)}</strong> de <strong>${fmt(objMesVal)}</strong>. ${fmt(resto)} de margem restante.`
+          : `"${objMes}" — gastaram <strong>${fmt(tG)}</strong>, ultrapassando o limite de <strong>${fmt(objMesVal)}</strong> em <strong>${fmt(-resto)}</strong>.`});
+    }
+  }
+
+  // ── SECÇÃO 4: ANÁLISE INTELIGENTE ─────────────────────────────
+  if (tR > 0) {
+    // Regra 50/30/20 personalizada
+    const necessidades = (orcCat['Casa']||0)+(orcCat['Carro']||0)+(orcCat['Comida']||0)+(orcCat['Crédito Revolut']||0)+(orcCat['Saúde']||0)+(orcCat['Telemóveis']||0);
+    const desejos      = (orcCat['Entretenimento']||0)+(orcCat['Diversas']||0)+(orcCat['Personal Care']||0)+(orcCat['Pets']||0);
+    const poupancaOrc  = orcCat['Poupança']||0;
+    const pct50 = Math.round((necessidades/tR)*100);
+    const pct30 = Math.round((desejos/tR)*100);
+    const pct20 = Math.round((poupancaOrc/tR)*100);
+    ds.push({t:'azul', cat:'📐 Análise', i:'📐', ti:`Distribuição do vosso orçamento`,
+      tx:`Baseado no orçamento definido: <strong>Necessidades ${pct50}%</strong> (ideal ≤50%) · <strong>Desejos ${pct30}%</strong> (ideal ≤30%) · <strong>Poupança ${pct20}%</strong> (ideal ≥20%). ${pct20>=20?'✅ Poupança dentro do ideal!':'⚠️ Considerem aumentar a poupança.'}`});
+
+    // Fundo emergência
+    ds.push({t:'roxo', cat:'🏦 Emergência', i:'🏦', ti:`Fundo de emergência recomendado`,
+      tx:`Com despesas mensais de ~<strong>${fmt(tO)}</strong>, o fundo de emergência ideal é entre <strong>${fmt(tO*3)}</strong> e <strong>${fmt(tO*6)}</strong> (3-6 meses). Vão acumulando progressivamente.`});
+
+    // Dízimo
+    if (tIgor > 0) {
+      ds.push({t:'amber', cat:'🙏 Dízimo', i:'🙏', ti:`Dízimo de ${MESES[mes-1]}: ${fmt(tIgor*0.1)}`,
+        tx:`10% do rendimento do Igor este mês (<strong>${fmt(tIgor)}</strong>) = <strong>${fmt(tIgor*0.1)}</strong>. Calculado automaticamente com base nos rendimentos introduzidos.`});
+    }
+
+    // Dica personalizada baseada no maior gasto
+    const maiorCat = Object.entries(porCat).sort((a,b)=>b[1]-a[1])[0];
+    if (maiorCat && !CATS_POSITIVAS.includes(maiorCat[0])) {
+      const pctMaior = Math.round((maiorCat[1]/tG)*100);
+      ds.push({t:'azul', cat:'🔍 Destaque', i:'🔍', ti:`${maiorCat[0]} é a maior despesa (${pctMaior}% do total)`,
+        tx:`Gastaram <strong>${fmt(maiorCat[1])}</strong> em ${maiorCat[0]}, o que representa <strong>${pctMaior}%</strong> de todos os gastos de ${MESES[mes-1]}. ${pctMaior>40?'É uma fatia considerável — vale a pena analisar se há margem para reduzir.':'Dentro do normal.'}`});
+    }
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────
+  // Agrupar por categoria
+  const grupos = {};
+  ds.forEach(d => {
+    const g = d.cat || 'Geral';
+    if (!grupos[g]) grupos[g] = [];
+    grupos[g].push(d);
+  });
+
+  let html = _deskH + `<div class="stitle">Análise de ${MESES[mes-1]} ${ano}</div>`;
+
+  // Score do mês
+  if (tR > 0) {
+    let score = 100;
+    if (saldo < 0) score -= 30;
+    if (proj > tO * 1.1) score -= 15;
+    if (catsAcima.length > 2) score -= 10;
+    if (tG > tGAnt * 1.2 && tGAnt > 0) score -= 10;
+    if ((porCat['Poupança']||0) >= (orcCat['Poupança']||0) && orcCat['Poupança']>0) score += 10;
+    if (totalPoupMes > 0) score += 5;
+    score = Math.max(0, Math.min(100, score));
+    const scoreCor = score>=80?'var(--green)':score>=60?'var(--amber)':'var(--red)';
+    const scoreEmoji = score>=80?'🌟':score>=60?'👍':'💪';
+    const scoreMsg = score>=80?'Excelente gestão!':score>=60?'Boa gestão — pequenos ajustes a fazer':'Mês difícil — mas estão a trabalhar nisso';
+    html += `<div class="card" style="margin-bottom:.75rem;text-align:center;padding:1.2rem">
+      <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Score financeiro de ${MESES[mes-1]}</div>
+      <div style="font-size:2.8rem;font-weight:800;color:${scoreCor};line-height:1">${score}</div>
+      <div style="font-size:.75rem;color:${scoreCor};margin-top:.2rem">${scoreEmoji} ${scoreMsg}</div>
+      <div style="height:6px;background:var(--surface3);border-radius:3px;margin:.75rem 0;overflow:hidden">
+        <div style="height:100%;width:${score}%;background:${scoreCor};border-radius:3px;transition:width .8s ease"></div>
+      </div>
+    </div>`;
+  }
+
+  Object.entries(grupos).forEach(([grupo, dicas]) => {
+    html += `<div class="stitle" style="margin-top:1rem">${grupo}</div>`;
+    dicas.forEach(d => {
+      html += `<div class="dica ${d.t}">
+        <div class="dica-hdr"><span>${d.i}</span><span class="dica-titulo">${d.ti}</span></div>
+        <div class="dica-texto">${d.tx}</div>
+      </div>`;
+    });
+  });
+
+  html += `<div style="height:1rem"></div>`;
+  el.innerHTML = html;
+  el.classList.add('active');
 }
+
 
 // ── MODAIS ────────────────────────────────────────────────────────────────
 // ── AUTOCOMPLETE DESCRIÇÕES ──────────────────────────────────────────────
