@@ -286,6 +286,39 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .milestone.reached{background:rgba(46,204,113,.08);border-color:rgba(46,204,113,.25)}
 .milestone.reached .milestone-title{color:var(--green)}
 .warn-box{background:rgba(243,156,18,.08);border:1px solid rgba(243,156,18,.25);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:.75rem;font-size:.85rem;color:var(--text2)}
+/* PESQUISA */
+.search-bar{display:flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem 1rem;margin-bottom:.75rem;transition:border-color .2s}
+.search-bar:focus-within{border-color:var(--accent)}
+.search-bar input{flex:1;background:none;border:none;color:var(--text);font-size:.9rem;outline:none}
+.search-bar input::placeholder{color:var(--text3)}
+.search-filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem}
+.filter-chip{background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.25rem .75rem;font-size:.75rem;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.search-result-count{font-size:.75rem;color:var(--text3);margin-bottom:.5rem}
+/* NOTAS MENSAIS */
+.nota-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem}
+.nota-textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:100px;font-family:inherit;transition:border-color .2s}
+.nota-textarea:focus{outline:none;border-color:var(--accent)}
+.nota-saved{font-size:.72rem;color:var(--green);margin-top:.35rem;opacity:0;transition:opacity .3s}
+/* OBJETIVO DO MÊS */
+.obj-mes-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem;position:relative;overflow:hidden}
+.obj-mes-card.ativo{border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.04)}
+.obj-mes-card.concluido{border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)}
+.obj-mes-prog{height:6px;background:var(--surface3);border-radius:3px;margin:.6rem 0;overflow:hidden}
+.obj-mes-fill{height:100%;border-radius:3px;transition:width .5s ease}
+/* FOTO RECIBO */
+.foto-wrap{position:relative;display:inline-block;margin-top:.5rem}
+.foto-thumb{width:64px;height:64px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer}
+.foto-del{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.upload-area{border:1.5px dashed var(--border2);border-radius:var(--radius-sm);padding:.75rem;text-align:center;font-size:.78rem;color:var(--text3);cursor:pointer;transition:all .15s;margin-top:.5rem}
+.upload-area:hover{border-color:var(--accent);color:var(--accent)}
+/* SEMANA DASHBOARD */
+.semana-bar{display:flex;gap:4px;align-items:flex-end;height:60px;margin:.5rem 0}
+.semana-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.semana-bar-fill{width:100%;border-radius:3px 3px 0 0;background:var(--accent);min-height:2px;transition:height .3s}
+.semana-day-lbl{font-size:.6rem;color:var(--text3)}
+.semana-day.hoje .semana-bar-fill{background:var(--green)}
+.semana-day.hoje .semana-day-lbl{color:var(--green);font-weight:700}
 /* ALERTAS */
 .alert-bar{display:flex;align-items:center;gap:.5rem;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:var(--radius-sm);padding:.5rem .75rem;margin-bottom:.4rem;font-size:.8rem}
 .alert-bar.amber{background:rgba(243,156,18,.1);border-color:rgba(243,156,18,.3)}
@@ -390,6 +423,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
     <div class="page" id="page-objetivos"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
     <div class="page" id="page-config"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
     <div class="page" id="page-anual"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
+    <div class="page" id="page-pesquisa"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
   </div>
 
   <nav class="bottom-nav" id="main-nav">
@@ -406,6 +440,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
     <button class="nav-item" data-p="dicas" onclick="nav('dicas')"><span class="nav-icon">💡</span>Dicas</button>
     <button class="nav-item" data-p="config" onclick="nav('config')"><span class="nav-icon">⚙️</span>Config</button>
     <button class="nav-item" data-p="anual" onclick="nav('anual')"><span class="nav-icon">📅</span>Anual</button>
+    <button class="nav-item" data-p="pesquisa" onclick="nav('pesquisa')"><span class="nav-icon">🔍</span>Pesquisa</button>
     <div style="flex:1"></div>
     <div class="nav-item nav-logout" id="nav-logout" style="display:none;margin-top:auto" onclick="doLogout()"><span class="nav-icon">⎋</span>Sair</div>
   </nav>
@@ -549,6 +584,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 </div>
 
 <div class="toast" id="toast"></div>
+<input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="uploadFoto(event)">
 
 <script>
 // ── CONFIG ─── substituir com os teus valores do Supabase ─────────────────
@@ -708,6 +744,7 @@ function renderPage(p){
   if(p==='objetivos')   return renderObjetivos();
   if(p==='config')      return renderConfig();
   if(p==='anual')       return renderAnual();
+  if(p==='pesquisa')    return renderPesquisa();
 }
 
 // ── DADOS ─────────────────────────────────────────────────────────────────
@@ -811,6 +848,34 @@ async function renderDash(){
     </div>
   </div>`;
 
+  // Dashboard da semana (últimos 7 dias)
+  const hoje7 = new Date();
+  const dias7 = Array.from({length:7}, (_,i) => {
+    const d = new Date(hoje7); d.setDate(d.getDate()-6+i);
+    return { data: d, label: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()], isToday: i===6 };
+  });
+  const gastosPorDia = {};
+  desp.forEach(d => { if(d.dia) gastosPorDia[d.dia] = (gastosPorDia[d.dia]||0)+parseFloat(d.valor); });
+  const maxDia = Math.max(...dias7.map(d=>gastosPorDia[d.data.getDate()]||0), 0.01);
+  const totalSemana = dias7.reduce((s,d) => s+(gastosPorDia[d.data.getDate()]||0), 0);
+
+  html += `<div class="card" style="margin-bottom:.75rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <div class="clbl">Últimos 7 dias</div>
+      <div style="font-size:.8rem;font-weight:600;color:var(--amber)">${fmt(totalSemana)}</div>
+    </div>
+    <div class="semana-bar">
+      ${dias7.map(d => {
+        const g = gastosPorDia[d.data.getDate()]||0;
+        const h = Math.max(Math.round((g/maxDia)*56), g>0?4:2);
+        return `<div class="semana-day ${d.isToday?'hoje':''}">
+          <div class="semana-bar-fill" style="height:${h}px" title="${d.label}: ${fmt(g)}"></div>
+          <div class="semana-day-lbl">${d.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
   // Alertas
   const porCatForAlert={};desp.forEach(d=>{const n=getCatNome(d.categoria_id);porCatForAlert[n]=(porCatForAlert[n]||0)+parseFloat(d.valor);});
   const orcCatForAlert={};orcamento.forEach(o=>{const n=getCatNome(o.categoria_id);orcCatForAlert[n]=(orcCatForAlert[n]||0)+parseFloat(o.valor_orcado);});
@@ -839,6 +904,48 @@ async function renderDash(){
   }
   el.innerHTML=html;
   } catch(e){console.error("renderDash",e);el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar. Tenta recarregar.</div>';}
+  // Nota mensal e objetivo do mês
+  const notaData = await loadNota();
+  const notaTxt  = notaData?.nota || '';
+  const objMes   = notaData?.obj_mes || '';
+  const objVal   = notaData?.obj_mes_valor || '';
+
+  // Calcular progresso do objetivo do mês
+  let objMesHtml = '';
+  if (objMes) {
+    const gastoTotal = desp.reduce((s,d)=>s+parseFloat(d.valor),0);
+    if (objVal && parseFloat(objVal) > 0) {
+      const limite = parseFloat(objVal);
+      const pct = Math.min((gastoTotal/limite)*100, 100);
+      const cor = pct>=100?'var(--red)':pct>=80?'var(--amber)':'var(--accent)';
+      objMesHtml = `<div class="obj-mes-card ${pct>=100?'':'ativo'}" style="margin-bottom:.75rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><span style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">🎯 Objetivo do mês</span>
+          <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div></div>
+          <div style="text-align:right"><div style="font-size:1rem;font-weight:700;color:${cor}">${fmt(gastoTotal)}</div>
+          <div style="font-size:.7rem;color:var(--text3)">de ${fmt(limite)}</div></div>
+        </div>
+        <div class="obj-mes-prog"><div class="obj-mes-fill" style="width:${pct}%;background:${cor}"></div></div>
+        <div style="font-size:.7rem;color:var(--text3)">${pct>=100?'✗ Limite ultrapassado':`✓ Faltam ${fmt(limite-gastoTotal)}`}</div>
+      </div>`;
+    } else {
+      objMesHtml = `<div class="obj-mes-card ativo" style="margin-bottom:.75rem">
+        <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">🎯 Objetivo do mês</div>
+        <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div>
+      </div>`;
+    }
+    html = objMesHtml + html;
+  }
+
+  html += `<div class="stitle">📝 Nota do mês</div>
+  <div class="nota-card">
+    <textarea class="nota-textarea" id="nota-texto" placeholder="Escreve aqui notas sobre ${MESES[mes-1]}…&#10;ex: Tivemos visita da família, carro foi à revisão, mês atípico…"
+      oninput="autoSaveNota()">${notaTxt}</textarea>
+    <div id="nota-saved-lbl" class="nota-saved">✓ Guardado automaticamente</div>
+  </div>`;
+
+  html += `<div style="height:1rem"></div>`;
+
   // Garantir que o dashboard fica visível após renderizar
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
@@ -872,7 +979,9 @@ async function renderDesp(){
           ${d.descricao?`<div class="di-meta">${d.descricao}</div>`:''}
           <div class="di-meta">${meta}</div></div>
         <div class="di-right"><div class="di-val">${fmt(d.valor)}</div></div>
-        <button class="desp-edit" onclick="openEdit('${d.id}')">✏️</button>
+        <button class="desp-edit" onclick="openEdit('${d.id}')" title="Editar">✏️</button>
+        <button class="desp-edit" onclick="openFotoInput('${d.id}')" title="Foto recibo">📷</button>
+        ${d.foto_url?`<div class="foto-wrap" style="display:inline-block;margin-left:.25rem"><img src="${d.foto_url}" class="foto-thumb" onclick="window.open('${d.foto_url}','_blank')" title="Ver foto"><button class="foto-del" onclick="delFoto('${d.id}','${d.foto_url}')">×</button></div>`:''}
         ${d.user_id===user?.id?`<button class="di-del" onclick="delD('${d.id}')">🗑</button>`:''}
       </div>`;
     });
@@ -1445,10 +1554,40 @@ async function renderConfig() {
   }
   html += `<button class="btn-add" onclick="openRec()" style="margin-bottom:1rem">+ Adicionar recorrente</button>`;
 
+  // Objetivo do mês
+  const notaAtual = await loadNota();
+  html += `<div class="stitle">🎯 Objetivo do mês — ${MESES[mes-1]}</div>
+  <div class="cfg-section"><div class="cfg-items">
+    <div class="cfg-row">
+      <div style="flex:1"><div class="cfg-row-label">Objetivo</div><div class="cfg-row-sub">Desafio ou meta para este mês</div></div>
+    </div>
+    <div style="padding:.5rem">
+      <input type="text" id="cfg-obj-mes" class="cfg-input" style="width:100%;margin-bottom:.5rem"
+        placeholder="ex: Não gastar em restaurantes acima de 150€"
+        value="${notaAtual?.obj_mes||''}">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+        <input type="number" id="cfg-obj-val" class="cfg-input" min="0" step="10"
+          placeholder="Limite € (opcional)"
+          value="${notaAtual?.obj_mes_valor||''}">
+        <span style="font-size:.75rem;color:var(--text3)">Limite em € (opcional)</span>
+      </div>
+      <button class="btn-cfg-save" style="width:100%" onclick="saveObjMes()">✓ Guardar objetivo do mês</button>
+    </div>
+  </div></div>`;
+
   html += `<div style="height:1rem"></div>`;
   el.innerHTML = html;
   // Garantir que a página está visível após render async
   el.classList.add('active');
+}
+
+async function saveObjMes() {
+  const obj = document.getElementById('cfg-obj-mes')?.value.trim() || '';
+  const val = document.getElementById('cfg-obj-val')?.value || '';
+  const nota = document.getElementById('nota-texto')?.value || '';
+  await saveNota(nota, obj, val);
+  showToast('Objetivo do mês guardado ✓', 'success');
+  renderDash();
 }
 
 async function saveOrcItem(id) {
@@ -2292,6 +2431,191 @@ ${poupancasMes.length?`<h2>💰 Depósitos em objetivos — ${MESES[mes-1]}</h2>
   const w    = window.open(url, '_blank');
   if (!w) showToast('Permite pop-ups para abrir o relatório', 'error');
   else showToast('Relatório aberto — clica "Guardar como PDF" ✓', 'success');
+}
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// PESQUISA DE DESPESAS
+// ══════════════════════════════════════════════════════════════════
+let _pesquisaDesp = [];
+let _pesquisaFiltro = { texto: '', catId: null, minVal: '', maxVal: '', periodo: 'mes' };
+
+async function renderPesquisa() {
+  const el = document.getElementById('page-pesquisa');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>A pesquisar…</div>';
+  el.classList.add('active');
+
+  const isD = window.innerWidth >= 900;
+  const _deskH = isD ? `<div class="desktop-header"><h2>🔍 Pesquisa</h2></div>` : '';
+
+  // Carregar todas as despesas do ano
+  if (!_pesquisaDesp.length) {
+    const { data } = await sb.from('despesas').select('*').eq('ano', ano).order('mes', {ascending:false}).order('dia', {ascending:false});
+    _pesquisaDesp = data || [];
+  }
+
+  const catOpts = cats.map(c => `<option value="${c.id}">${c.icone} ${c.nome}</option>`).join('');
+
+  let html = _deskH + `
+  <div class="search-bar">
+    <span style="color:var(--text3);font-size:1.1rem">🔍</span>
+    <input type="text" id="srch-txt" placeholder="Pesquisar por nome, descrição…"
+      value="${_pesquisaFiltro.texto}"
+      oninput="_pesquisaFiltro.texto=this.value;renderResultados()">
+  </div>
+  <div class="search-filters">
+    <select id="srch-cat" style="background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.25rem .75rem;font-size:.75rem;color:var(--text3);cursor:pointer"
+      onchange="_pesquisaFiltro.catId=this.value?parseInt(this.value):null;renderResultados()">
+      <option value="">Todas as categorias</option>${catOpts}
+    </select>
+    <input type="number" id="srch-min" placeholder="Min €" min="0" step="0.01"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.25rem .75rem;font-size:.75rem;color:var(--text);width:80px"
+      value="${_pesquisaFiltro.minVal}"
+      oninput="_pesquisaFiltro.minVal=this.value;renderResultados()">
+    <input type="number" id="srch-max" placeholder="Max €" min="0" step="0.01"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.25rem .75rem;font-size:.75rem;color:var(--text);width:80px"
+      value="${_pesquisaFiltro.maxVal}"
+      oninput="_pesquisaFiltro.maxVal=this.value;renderResultados()">
+    <span class="filter-chip ${_pesquisaFiltro.periodo==='mes'?'active':''}" onclick="_pesquisaFiltro.periodo='mes';_pesquisaDesp=[];renderPesquisa()">Este mês</span>
+    <span class="filter-chip ${_pesquisaFiltro.periodo==='ano'?'active':''}" onclick="_pesquisaFiltro.periodo='ano';_pesquisaDesp=[];renderPesquisa()">Este ano</span>
+    <span class="filter-chip ${_pesquisaFiltro.periodo==='tudo'?'active':''}" onclick="_pesquisaFiltro.periodo='tudo';_pesquisaDesp=[];renderPesquisa()">Tudo</span>
+  </div>
+  <div id="srch-results"></div>`;
+
+  el.innerHTML = html;
+  el.classList.add('active');
+
+  // Reload based on period
+  let query = sb.from('despesas').select('*');
+  if (_pesquisaFiltro.periodo === 'mes') query = query.eq('ano', ano).eq('mes', mes);
+  else if (_pesquisaFiltro.periodo === 'ano') query = query.eq('ano', ano);
+  query = query.order('mes', {ascending:false}).order('dia', {ascending:false});
+  const { data } = await query;
+  _pesquisaDesp = data || [];
+  renderResultados();
+}
+
+function renderResultados() {
+  const el = document.getElementById('srch-results');
+  if (!el) return;
+  let desp = [..._pesquisaDesp];
+
+  const txt = _pesquisaFiltro.texto.toLowerCase().trim();
+  if (txt) desp = desp.filter(d =>
+    d.subcategoria?.toLowerCase().includes(txt) ||
+    d.descricao?.toLowerCase().includes(txt)
+  );
+  if (_pesquisaFiltro.catId) desp = desp.filter(d => d.categoria_id === _pesquisaFiltro.catId);
+  if (_pesquisaFiltro.minVal) desp = desp.filter(d => parseFloat(d.valor) >= parseFloat(_pesquisaFiltro.minVal));
+  if (_pesquisaFiltro.maxVal) desp = desp.filter(d => parseFloat(d.valor) <= parseFloat(_pesquisaFiltro.maxVal));
+
+  const total = desp.reduce((s,d) => s+parseFloat(d.valor), 0);
+
+  if (!desp.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div>Sem resultados para os filtros aplicados.</div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="search-result-count">${desp.length} resultado${desp.length!==1?'s':''} · total ${fmt(total)}</div>` +
+    desp.map(d => {
+      const cat = cats.find(c=>c.id===d.categoria_id);
+      const mesStr = `${d.dia||'?'}/${d.mes}/${d.ano}`;
+      return `<div class="di">
+        <div class="di-ico">${cat?.icone||'💰'}</div>
+        <div class="di-info">
+          <div class="di-name">${d.subcategoria}</div>
+          <div class="di-meta">${cat?.nome||'–'} · ${mesStr}${d.descricao?' · '+d.descricao:''}</div>
+        </div>
+        <div class="di-right"><div class="di-val">${fmt(d.valor)}</div></div>
+        <button class="desp-edit" onclick="openEdit('${d.id}')" title="Editar">✏️</button>
+        <button class="desp-edit" onclick="openFotoInput('${d.id}')" title="Foto recibo">📷</button>
+        ${d.foto_url?`<div class="foto-wrap" style="display:inline-block;margin-left:.25rem"><img src="${d.foto_url}" class="foto-thumb" onclick="window.open('${d.foto_url}','_blank')" title="Ver foto"><button class="foto-del" onclick="delFoto('${d.id}','${d.foto_url}')">×</button></div>`:''}
+        <button class="di-del" onclick="delDSearch('${d.id}')">🗑</button>
+      </div>`;
+    }).join('');
+}
+
+async function delDSearch(id) {
+  if (!confirm('Apagar esta despesa?')) return;
+  await sb.from('despesas').delete().eq('id', id);
+  _pesquisaDesp = _pesquisaDesp.filter(d => d.id !== id);
+  renderResultados();
+  showToast('Apagado ✓', 'success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NOTAS MENSAIS + OBJETIVO DO MÊS (guardados no Supabase - tabela notas)
+// ══════════════════════════════════════════════════════════════════
+let _notaTimer = null;
+
+async function loadNota() {
+  try {
+    const { data } = await sb.from('notas_mensais').select('*')
+      .eq('ano', ano).eq('mes', mes).single();
+    return data;
+  } catch(e) { return null; }
+}
+
+async function saveNota(texto, objMes, objMesValor) {
+  const existing = await loadNota();
+  const payload = { user_id: user.id, ano, mes, nota: texto, obj_mes: objMes, obj_mes_valor: objMesValor || null };
+  if (existing) {
+    await sb.from('notas_mensais').update(payload).eq('id', existing.id);
+  } else {
+    await sb.from('notas_mensais').insert(payload);
+  }
+}
+
+function autoSaveNota() {
+  clearTimeout(_notaTimer);
+  _notaTimer = setTimeout(async () => {
+    const txt = document.getElementById('nota-texto')?.value || '';
+    const obj = document.getElementById('nota-obj')?.value || '';
+    const val = document.getElementById('nota-obj-val')?.value || '';
+    await saveNota(txt, obj, val);
+    const lbl = document.getElementById('nota-saved-lbl');
+    if (lbl) { lbl.style.opacity = '1'; setTimeout(() => lbl.style.opacity = '0', 2000); }
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// FOTO DE RECIBO
+// ══════════════════════════════════════════════════════════════════
+let _fotoTargetId = null;
+
+function openFotoInput(despId) {
+  _fotoTargetId = despId;
+  document.getElementById('foto-input').click();
+}
+
+async function uploadFoto(event) {
+  const file = event.target.files[0];
+  if (!file || !_fotoTargetId) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Foto demasiado grande (máx 5MB)', 'error'); return; }
+
+  showToast('A enviar foto…', 'success');
+  const ext  = file.name.split('.').pop();
+  const path = `recibos/${user.id}/${_fotoTargetId}.${ext}`;
+
+  try {
+    const { error: upErr } = await sb.storage.from('recibos').upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: urlData } = sb.storage.from('recibos').getPublicUrl(path);
+    await sb.from('despesas').update({ foto_url: urlData.publicUrl }).eq('id', _fotoTargetId);
+    showToast('Foto guardada ✓', 'success');
+    renderDesp();
+  } catch(e) {
+    showToast('Erro ao guardar foto. Cria o bucket "recibos" no Supabase Storage.', 'error');
+  }
+  event.target.value = '';
+}
+
+async function delFoto(despId, fotoUrl) {
+  if (!confirm('Apagar esta foto?')) return;
+  await sb.from('despesas').update({ foto_url: null }).eq('id', despId);
+  showToast('Foto apagada ✓', 'success');
+  renderDesp();
 }
 
 
