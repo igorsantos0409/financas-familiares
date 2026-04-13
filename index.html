@@ -56,6 +56,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
   .topbar{display:none}
   .bottom-nav{position:fixed;top:0;left:0;bottom:0;right:auto;width:200px;flex-direction:column;border-top:none;border-right:1px solid var(--border);padding:1.5rem 0;gap:.25rem;z-index:100}
   .nav-item{flex-direction:row;justify-content:flex-start;gap:.75rem;padding:.65rem 1.25rem;border-radius:var(--radius-sm);margin:0 .5rem;font-size:.85rem;width:auto}
+  .nav-item span:not(.nav-icon){display:inline!important;font-size:.85rem}
   .nav-icon{font-size:1.1rem}
   .nav-item.active{background:rgba(79,142,247,.12)}
   .main{margin-left:200px;max-width:none;padding:1.5rem 2rem;padding-bottom:2rem}
@@ -76,9 +77,10 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
   .main{padding:2rem 3rem;padding-bottom:2rem}
   .g2{grid-template-columns:repeat(4,1fr)}
 }
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:.55rem 0;gap:.15rem;background:none;border:none;color:var(--text3);font-size:.62rem;font-weight:500;transition:color .15s}
-.nav-icon{font-size:1.2rem}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem 0;gap:0;background:none;border:none;color:var(--text3);transition:color .15s}
+.nav-item>*:not(.nav-icon){display:none!important}
+.nav-icon{font-size:1.3rem;line-height:1;display:flex!important}
 .nav-item.active{color:var(--accent)}
 .page{display:none}.page.active{display:block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
@@ -285,6 +287,27 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .milestone-sub{font-size:.72rem;color:var(--text3);margin-top:.1rem}
 .milestone.reached{background:rgba(46,204,113,.08);border-color:rgba(46,204,113,.25)}
 .milestone.reached .milestone-title{color:var(--green)}
+.hist-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin-bottom:.75rem}
+@media(min-width:640px){.hist-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.hist-grid{grid-template-columns:repeat(4,1fr)}}
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.hist-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.hist-card.atual{border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.05)}
+.hist-card.bom{border-color:rgba(46,204,113,.3)}
+.hist-card.mau{border-color:rgba(231,76,60,.3)}
+.hist-mes{font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem}
+.hist-gasto{font-size:1.1rem;font-weight:700}
+.hist-saldo{font-size:.72rem;margin-top:.2rem;font-weight:500}
+.hist-score{position:absolute;top:.6rem;right:.6rem;font-size:.7rem;font-weight:700;padding:.15rem .4rem;border-radius:4px}
+.hist-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:.5rem;overflow:hidden}
+.hist-bar-fill{height:100%;border-radius:2px}
+/* SALDO REAL */
+.saldo-real-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:.75rem}
+.saldo-diff-pos{color:var(--green);font-weight:700}
+.saldo-diff-neg{color:var(--red);font-weight:700}
+.saldo-input-row{display:flex;gap:.75rem;align-items:center;margin-top:.75rem}
+.saldo-input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .9rem;color:var(--text);font-size:1rem;font-weight:600;width:160px;transition:border-color .2s}
+.saldo-input:focus{outline:none;border-color:var(--accent)}
 .warn-box{background:rgba(243,156,18,.08);border:1px solid rgba(243,156,18,.25);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:.75rem;font-size:.85rem;color:var(--text2)}
 /* PESQUISA */
 .search-bar{display:flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem 1rem;margin-bottom:.75rem;transition:border-color .2s}
@@ -424,6 +447,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
     <div class="page" id="page-config"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
     <div class="page" id="page-anual"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
     <div class="page" id="page-pesquisa"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
+    <div class="page" id="page-historico"><div class="loading"><div class="spinner"></div>A carregar…</div></div>
   </div>
 
   <nav class="bottom-nav" id="main-nav">
@@ -441,6 +465,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
     <button class="nav-item" data-p="config" onclick="nav('config')"><span class="nav-icon">⚙️</span>Config</button>
     <button class="nav-item" data-p="anual" onclick="nav('anual')"><span class="nav-icon">📅</span>Anual</button>
     <button class="nav-item" data-p="pesquisa" onclick="nav('pesquisa')"><span class="nav-icon">🔍</span>Pesquisa</button>
+    <button class="nav-item" data-p="historico" onclick="nav('historico')"><span class="nav-icon">🗓️</span>Histórico</button>
     <div style="flex:1"></div>
     <div class="nav-item nav-logout" id="nav-logout" style="display:none;margin-top:auto" onclick="doLogout()"><span class="nav-icon">⎋</span>Sair</div>
   </nav>
@@ -745,6 +770,7 @@ function renderPage(p){
   if(p==='config')      return renderConfig();
   if(p==='anual')       return renderAnual();
   if(p==='pesquisa')    return renderPesquisa();
+  if(p==='historico')   return renderHistorico();
 }
 
 // ── DADOS ─────────────────────────────────────────────────────────────────
@@ -905,15 +931,16 @@ async function renderDash(){
   el.innerHTML=html;
   } catch(e){console.error("renderDash",e);el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar. Tenta recarregar.</div>';}
   // Nota mensal e objetivo do mês
-  const notaData = await loadNota();
+  let notaData = null;
+  try { notaData = await loadNota(); } catch(e) {}
   const notaTxt  = notaData?.nota || '';
   const objMes   = notaData?.obj_mes || '';
   const objVal   = notaData?.obj_mes_valor || '';
 
-  // Calcular progresso do objetivo do mês
-  let objMesHtml = '';
+  // Calcular progresso do objetivo do mês — adicionar NO INÍCIO do html
   if (objMes) {
     const gastoTotal = desp.reduce((s,d)=>s+parseFloat(d.valor),0);
+    let objMesHtml = '';
     if (objVal && parseFloat(objVal) > 0) {
       const limite = parseFloat(objVal);
       const pct = Math.min((gastoTotal/limite)*100, 100);
@@ -934,7 +961,7 @@ async function renderDash(){
         <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div>
       </div>`;
     }
-    html = objMesHtml + html;
+    html = objMesHtml + html;  // prepend — html já existe neste ponto
   }
 
   html += `<div class="stitle">📝 Nota do mês</div>
@@ -2747,8 +2774,9 @@ let _notaTimer = null;
 
 async function loadNota() {
   try {
-    const { data } = await sb.from('notas_mensais').select('*')
-      .eq('ano', ano).eq('mes', mes).single();
+    const { data, error } = await sb.from('notas_mensais').select('*')
+      .eq('ano', ano).eq('mes', mes).maybeSingle();
+    if (error) return null;
     return data;
   } catch(e) { return null; }
 }
@@ -2812,6 +2840,207 @@ async function delFoto(despId, fotoUrl) {
   await sb.from('despesas').update({ foto_url: null }).eq('id', despId);
   showToast('Foto apagada ✓', 'success');
   renderDesp();
+}
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// HISTÓRICO DE MESES
+// ══════════════════════════════════════════════════════════════════
+async function renderHistorico() {
+  const el = document.getElementById('page-historico');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>A carregar…</div>';
+  el.classList.add('active');
+
+  if (!cats.length) await loadCats();
+  const isD = window.innerWidth >= 900;
+  const _deskH = isD ? `<div class="desktop-header"><h2>🗓️ Histórico</h2></div>` : '';
+
+  // Carregar todos os dados do ano
+  const [{ data: despAll }, { data: rendAll }, { data: orcAll }] = await Promise.all([
+    sb.from('despesas').select('mes,valor,categoria_id').eq('ano', ano),
+    sb.from('rendimentos').select('mes,valor').eq('ano', ano),
+    sb.from('orcamento').select('mes,valor_orcado').eq('ano', ano)
+  ]);
+
+  // Calcular por mês
+  const mesesData = Array.from({length:12}, (_,i) => {
+    const m = i + 1;
+    const desp = (despAll||[]).filter(d=>d.mes===m);
+    const rend = (rendAll||[]).filter(r=>r.mes===m);
+    const orc  = (orcAll||[]).filter(o=>o.mes===m);
+    const tG = desp.reduce((s,d)=>s+parseFloat(d.valor),0);
+    const tR = rend.reduce((s,r)=>s+parseFloat(r.valor),0);
+    const tO = orc.reduce((s,o)=>s+parseFloat(o.valor_orcado),0);
+    const saldo = tR > 0 ? tR - tG : null;
+    // Score simples
+    let score = null;
+    if (tR > 0) {
+      score = 100;
+      if (saldo < 0) score -= 30;
+      if (tG > tO * 1.1) score -= 15;
+      if (tR > 0 && (tG/tR) > 0.9) score -= 10;
+      score = Math.max(0, Math.min(100, score));
+    }
+    return { m, tG, tR, tO, saldo, score, temDados: tG > 0 || tR > 0 };
+  });
+
+  const maxGasto = Math.max(...mesesData.map(m=>m.tG), 1);
+  const mesFuturo = (m) => m > mes && ano === new Date().getFullYear();
+  const mesAtual  = (m) => m === mes && ano === new Date().getFullYear();
+
+  let html = _deskH;
+
+  // Saldo Revolut / conta real
+  const saldoReal = await loadSaldoReal();
+  const saldoCalc = mesesData[mes-1]?.saldo;
+  html += buildSaldoRealCard(saldoReal, saldoCalc);
+
+  // Resumo do ano até agora
+  const mesesComDados = mesesData.filter(m => m.temDados && !mesFuturo(m.m));
+  const totalGastoAno = mesesComDados.reduce((s,m)=>s+m.tG,0);
+  const totalRendAno  = mesesComDados.filter(m=>m.tR>0).reduce((s,m)=>s+m.tR,0);
+  const mediaMensal   = mesesComDados.length > 0 ? totalGastoAno/mesesComDados.length : 0;
+
+  if (mesesComDados.length > 1) {
+    html += `<div class="g2" style="margin-bottom:.75rem">
+      <div class="card c-amber">
+        <div class="clbl">Total gasto ${ano}</div>
+        <div class="cval a">${fmt(totalGastoAno)}</div>
+        <div class="csub">média ${fmt(mediaMensal)}/mês</div>
+      </div>
+      <div class="card c-green">
+        <div class="clbl">Total rendimento ${ano}</div>
+        <div class="cval g">${totalRendAno>0?fmt(totalRendAno):'–'}</div>
+        <div class="csub">${totalRendAno>0?fmt(totalRendAno-totalGastoAno)+' poupados':'sem dados'}</div>
+      </div>
+    </div>`;
+  }
+
+  html += `<div class="stitle">${ano} — todos os meses</div><div class="hist-grid">`;
+
+  mesesData.forEach(({m, tG, tR, tO, saldo, score, temDados}) => {
+    const futuro  = mesFuturo(m);
+    const atual   = mesAtual(m);
+    const pct     = tO > 0 ? Math.min((tG/tO)*100,100) : 0;
+    const corBar  = pct>=100?'var(--red)':pct>=80?'var(--amber)':'var(--accent)';
+    const cls     = atual?'atual':saldo!==null&&saldo>=0?'bom':saldo!==null?'mau':'';
+    const scoreStr = score!==null ? `<span class="hist-score" style="background:${score>=80?'rgba(46,204,113,.2)':score>=60?'rgba(243,156,18,.2)':'rgba(231,76,60,.2)'};color:${score>=80?'var(--green)':score>=60?'var(--amber)':'var(--red)'}">${score}</span>` : '';
+
+    html += `<div class="hist-card ${cls}" onclick="irParaMes(${m})">
+      ${scoreStr}
+      <div class="hist-mes">${MESES[m-1]}${atual?' ← atual':''}</div>
+      ${futuro ? `<div style="color:var(--text3);font-size:.82rem;margin-top:.3rem">–</div>` :
+        temDados ? `
+        <div class="hist-gasto" style="color:${saldo!==null&&saldo<0?'var(--red)':'var(--amber)'}">${fmt(tG)}</div>
+        ${tR>0?`<div class="hist-saldo" style="color:${saldo>=0?'var(--green)':'var(--red)'}">${saldo>=0?'+':''} ${fmt(saldo)} saldo</div>`:'<div class="hist-saldo" style="color:var(--text3)">sem rendimentos</div>'}
+        <div class="hist-bar"><div class="hist-bar-fill" style="width:${pct}%;background:${corBar}"></div></div>
+        ` : `<div style="color:var(--text3);font-size:.78rem;margin-top:.3rem">Sem dados</div>`
+      }
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  // Evolução ao longo do ano (top 3 categorias)
+  if (mesesComDados.length > 2) {
+    const catTotals = {};
+    (despAll||[]).forEach(d => {
+      const n = getCatNome(d.categoria_id);
+      if (!CATS_POSITIVAS.includes(n)) catTotals[n] = (catTotals[n]||0)+parseFloat(d.valor);
+    });
+    const top3 = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    if (top3.length) {
+      html += `<div class="stitle">Top categorias em ${ano}</div><div class="card" style="margin-bottom:.75rem">`;
+      top3.forEach(([nome,total],i) => {
+        const cat = cats.find(c=>c.nome===nome);
+        const pctTotal = Math.round((total/totalGastoAno)*100);
+        html += `<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:${i<2?'.5px solid var(--border)':'none'}">
+          <span style="font-size:1.2rem">${cat?.icone||'💰'}</span>
+          <div style="flex:1">
+            <div style="font-size:.85rem;font-weight:500">${nome}</div>
+            <div style="height:4px;background:var(--surface3);border-radius:2px;margin-top:.3rem;overflow:hidden">
+              <div style="height:100%;width:${pctTotal*2}%;background:var(--accent);border-radius:2px"></div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:.9rem;font-weight:600">${fmt(total)}</div>
+            <div style="font-size:.68rem;color:var(--text3)">${pctTotal}% do total</div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+  }
+
+  html += `<div style="height:1rem"></div>`;
+  el.innerHTML = html;
+  el.classList.add('active');
+}
+
+function irParaMes(m) {
+  mes = m;
+  updateM();
+  Promise.all([loadOrc(), loadR()]).then(() => nav('dashboard'));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SALDO REAL (Revolut / conta bancária) vs calculado pela app
+// ══════════════════════════════════════════════════════════════════
+async function loadSaldoReal() {
+  try {
+    const { data } = await sb.from('notas_mensais').select('saldo_real')
+      .eq('ano', ano).eq('mes', mes).maybeSingle();
+    return data?.saldo_real ?? null;
+  } catch(e) { return null; }
+}
+
+async function saveSaldoReal(valor) {
+  const existing = await loadNota();
+  const payload  = { saldo_real: valor };
+  if (existing) {
+    await sb.from('notas_mensais').update(payload).eq('id', existing.id);
+  } else {
+    await sb.from('notas_mensais').insert({ user_id: user.id, ano, mes, saldo_real: valor });
+  }
+  showToast('Saldo guardado ✓', 'success');
+  renderHistorico();
+}
+
+function buildSaldoRealCard(saldoReal, saldoCalc) {
+  const diff = (saldoReal !== null && saldoCalc !== null) ? saldoReal - saldoCalc : null;
+  const diffStr = diff !== null
+    ? `<div style="margin-top:.5rem;font-size:.82rem">
+        Diferença vs app:
+        <span class="${diff>=0?'saldo-diff-pos':'saldo-diff-neg'}">${diff>=0?'+':''}${fmt(diff)}</span>
+        ${Math.abs(diff)<5?'<span style="color:var(--green);font-size:.75rem"> ✓ Tudo bate certo!</span>':
+          diff>0?'<span style="color:var(--text3);font-size:.75rem"> — conta tem mais (depósitos não registados?)</span>':
+          '<span style="color:var(--text3);font-size:.75rem"> — conta tem menos (despesa esquecida?)</span>'}
+      </div>` : '';
+
+  return `<div class="saldo-real-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
+      <div>
+        <div class="clbl">💳 Saldo real da conta / Revolut</div>
+        <div style="font-size:.75rem;color:var(--text3)">Introduz o saldo atual e compara com o calculado pela app</div>
+      </div>
+      ${saldoCalc !== null ? `<div style="text-align:right"><div style="font-size:.68rem;color:var(--text3)">App calcula</div><div style="font-weight:700;color:${saldoCalc>=0?'var(--green)':'var(--red)'}">${fmt(saldoCalc)}</div></div>` : ''}
+    </div>
+    ${diffStr}
+    <div class="saldo-input-row">
+      <input type="number" class="saldo-input" id="saldo-real-input" step="0.01"
+        placeholder="0,00" value="${saldoReal !== null ? saldoReal : ''}"
+        onkeydown="if(event.key==='Enter')saveSaldoRealInput()">
+      <button class="btn-cfg-save" onclick="saveSaldoRealInput()">✓ Guardar</button>
+    </div>
+  </div>`;
+}
+
+async function saveSaldoRealInput() {
+  const val = parseFloat(document.getElementById('saldo-real-input')?.value);
+  if (isNaN(val)) { showToast('Valor inválido', 'error'); return; }
+  await saveSaldoReal(val);
 }
 
 
