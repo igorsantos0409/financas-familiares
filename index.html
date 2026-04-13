@@ -1860,16 +1860,26 @@ function renderObjDetail(objId, contribsMap) {
 // ══════════════════════════════════════════════════════════════════
 // 1. ALERTAS DE ORÇAMENTO — mostrados no dashboard
 // ══════════════════════════════════════════════════════════════════
+// Categorias onde gastar 100% é bom (não geram alertas)
+const CATS_POSITIVAS = ['Poupança', 'Dízimo'];
+
 function buildAlertas(porCat, orcCat) {
   const alertas = [];
   cats.forEach(cat => {
+    if (CATS_POSITIVAS.includes(cat.nome)) return; // ignorar poupança e dízimo
     const gasto = porCat[cat.nome] || 0;
     const orc   = orcCat[cat.nome] || 0;
     if (orc <= 0 || gasto <= 0) return;
     const pct = (gasto / orc) * 100;
-    if (pct >= 100)      alertas.push({ tipo: 'red',   ico: cat.icone, msg: `<strong>${cat.nome}</strong> ultrapassou o orçamento — ${fmt(gasto)} de ${fmt(orc)}` });
-    else if (pct >= 80)  alertas.push({ tipo: 'amber', ico: cat.icone, msg: `<strong>${cat.nome}</strong> em ${Math.round(pct)}% do orçamento — faltam ${fmt(orc-gasto)}` });
+    if (pct >= 100)     alertas.push({ tipo: 'red',   ico: cat.icone, msg: `<strong>${cat.nome}</strong> ultrapassou o orçamento — ${fmt(gasto)} de ${fmt(orc)}` });
+    else if (pct >= 80) alertas.push({ tipo: 'amber', ico: cat.icone, msg: `<strong>${cat.nome}</strong> em ${Math.round(pct)}% — faltam ${fmt(orc-gasto)}` });
   });
+  // Alerta positivo se poupança foi feita
+  const poupGasto = porCat['Poupança'] || 0;
+  const poupOrc   = orcCat['Poupança'] || 0;
+  if (poupOrc > 0 && poupGasto >= poupOrc) {
+    alertas.unshift({ tipo: 'green', ico: '🏦', msg: `<strong>Poupança</strong> concluída — ${fmt(poupGasto)} ✓` });
+  }
   return alertas;
 }
 
@@ -2158,6 +2168,27 @@ async function exportarRelatorio() {
   const saldo       = totalRend - totalGasto;
   const hoje        = new Date().toLocaleDateString('pt-PT', {day:'numeric',month:'long',year:'numeric'});
 
+  // Carregar objetivos e poupanças do mês
+  if (!_allObjetivos.length) await loadObjetivos();
+  const poupancasMes = [];
+  let totalPoupancasMes = 0;
+  for (const obj of _allObjetivos) {
+    const { data } = await sb.from('poupancas')
+      .select('*').eq('objetivo_id', obj.id)
+      .eq('ano', ano).eq('mes', mes)
+      .order('created_at');
+    (data||[]).forEach(p => {
+      poupancasMes.push({ ...p, obj_nome: obj.nome, obj_emoji: obj.emoji });
+      totalPoupancasMes += parseFloat(p.valor);
+    });
+  }
+  // Total poupado em cada objetivo (histórico)
+  const objTotais = {};
+  for (const obj of _allObjetivos) {
+    const { data } = await sb.from('poupancas').select('valor').eq('objetivo_id', obj.id).eq('tipo','entrada');
+    objTotais[obj.id] = (data||[]).reduce((s,p)=>s+parseFloat(p.valor),0);
+  }
+
   const porCat = {}, orcCat = {};
   desp.forEach(d => { const n=getCatNome(d.categoria_id); porCat[n]=(porCat[n]||0)+parseFloat(d.valor); });
   orcamento.forEach(o => { const n=getCatNome(o.categoria_id); orcCat[n]=(orcCat[n]||0)+parseFloat(o.valor_orcado); });
@@ -2178,6 +2209,30 @@ async function exportarRelatorio() {
 
   const rendRows = rends.map(r => `<tr><td>${r.nome_pessoa==='igor'?'Igor':'Laura'}</td><td>${r.tipo||'Salário base'}</td><td>${r.nota||''}</td><td style="text-align:right;font-weight:600;color:#27ae60">${fmt(r.valor)}</td></tr>`).join('');
 
+  // Secção de objetivos
+  const objRows = _allObjetivos.map(obj => {
+    const totalObj  = objTotais[obj.id] || 0;
+    const pct       = Math.min(Math.round((totalObj/obj.meta)*100), 100);
+    const depMes    = poupancasMes.filter(p=>p.obj_nome===obj.nome);
+    const totalMes  = depMes.reduce((s,p)=>s+parseFloat(p.valor),0);
+    const barColor  = pct >= 100 ? '#27ae60' : pct >= 50 ? '#4f8ef7' : '#f39c12';
+    return `<tr>
+      <td>${obj.emoji} ${obj.nome}</td>
+      <td style="text-align:right;font-weight:600;color:#4f8ef7">${totalMes > 0 ? fmt(totalMes) : '–'}</td>
+      <td style="text-align:right">${fmt(totalObj)}</td>
+      <td style="text-align:right;color:#888">${fmt(obj.meta)}</td>
+      <td style="text-align:right">
+        <span style="font-weight:700;color:${barColor}">${pct}%</span>
+        ${obj.data_alvo?`<br><span style="font-size:7.5pt;color:#aaa">até ${new Date(obj.data_alvo).toLocaleDateString('pt-PT',{month:'short',year:'numeric'})}</span>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const poupMesRows = poupancasMes.map(p => {
+    const data = new Date(p.created_at).toLocaleDateString('pt-PT',{day:'numeric',month:'short'});
+    return `<tr><td>${data}</td><td>${p.obj_emoji} ${p.obj_nome}</td><td>${p.descricao||p.tipo||'Depósito'}</td><td style="text-align:right;font-weight:600;color:#27ae60">${fmt(p.valor)}</td></tr>`;
+  }).join('');
+
   const html = `<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8">
 <title>Relatório ${MESES[mes-1]} ${ano}</title>
 <style>
@@ -2187,10 +2242,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;color:#1a1a2e;backgr
 .header{background:linear-gradient(135deg,#1a1f2e,#2d3650);color:#fff;padding:22px 28px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
 .header h1{font-size:18pt;font-weight:700}
 .header p{font-size:9pt;opacity:.7;margin-top:3px}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
 .kpi{border:1.5px solid #e8ecf5;border-radius:8px;padding:12px 16px}
 .kpi-lbl{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:3px}
-.kpi-val{font-size:15pt;font-weight:700}
+.kpi-val{font-size:14pt;font-weight:700}
 .green{color:#27ae60}.red{color:#c0392b}.amber{color:#e67e22}.blue{color:#2980b9}
 h2{font-size:10.5pt;font-weight:700;color:#2d3650;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid #4f8ef7}
 table{width:100%;border-collapse:collapse;font-size:8.5pt}
@@ -2199,6 +2254,8 @@ td{padding:5px 9px;border-bottom:.5px solid #edf0f7;vertical-align:middle}
 tfoot td{font-weight:700;padding:7px 9px;border-top:1.5px solid #d0d7ee;border-bottom:none;background:#f8f9ff}
 .footer{margin-top:28px;text-align:center;font-size:7.5pt;color:#bbb;border-top:1px solid #eee;padding-top:10px}
 .print-btn{position:fixed;top:14px;right:14px;background:#4f8ef7;color:#fff;border:none;padding:9px 18px;border-radius:7px;font-size:10pt;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(79,142,247,.4);z-index:999}
+.obj-bar{height:5px;background:#e8ecf5;border-radius:3px;margin-top:3px;overflow:hidden}
+.obj-bar-fill{height:100%;border-radius:3px}
 @media print{.print-btn{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head><body>
 <button class="print-btn" onclick="window.print()">🖨️ Guardar como PDF</button>
@@ -2210,11 +2267,20 @@ tfoot td{font-weight:700;padding:7px 9px;border-top:1.5px solid #d0d7ee;border-b
   <div class="kpi"><div class="kpi-lbl">Rendimento</div><div class="kpi-val green">${totalRend>0?fmt(totalRend):'–'}</div></div>
   <div class="kpi"><div class="kpi-lbl">Total gasto</div><div class="kpi-val amber">${fmt(totalGasto)}</div></div>
   <div class="kpi"><div class="kpi-lbl">Saldo</div><div class="kpi-val ${saldo>=0?'green':'red'}">${totalRend>0?fmt(saldo):'–'}</div></div>
+  <div class="kpi"><div class="kpi-lbl">Poupado p/ objetivos</div><div class="kpi-val blue">${totalPoupancasMes>0?fmt(totalPoupancasMes):'–'}</div></div>
 </div>
 ${totalRend>0?`<h2>👥 Rendimentos</h2><table><thead><tr><th>Pessoa</th><th>Tipo</th><th>Nota</th><th style="text-align:right">Valor</th></tr></thead><tbody>${rendRows}</tbody><tfoot><tr><td colspan="3">Total rendimento</td><td style="text-align:right" class="green">${fmt(totalRend)}</td></tr></tfoot></table>`:''}
 <h2>📊 Por categoria</h2>
 <table><thead><tr><th>Categoria</th><th style="text-align:right">Gasto</th><th style="text-align:right">Orçado</th><th style="text-align:right">%</th></tr></thead><tbody>${catRows}</tbody>
 <tfoot><tr><td>Total</td><td style="text-align:right" class="amber">${fmt(totalGasto)}</td><td style="text-align:right;color:#888">${fmt(totalOrcado)}</td><td></td></tr></tfoot></table>
+${_allObjetivos.length?`<h2>🎯 Objetivos — progresso acumulado</h2>
+<table><thead><tr><th>Objetivo</th><th style="text-align:right">Este mês</th><th style="text-align:right">Total poupado</th><th style="text-align:right">Meta</th><th style="text-align:right">Progresso</th></tr></thead>
+<tbody>${objRows}</tbody>
+<tfoot><tr><td>Total poupado este mês</td><td style="text-align:right" class="blue">${fmt(totalPoupancasMes)}</td><td colspan="3"></td></tr></tfoot></table>`:''}
+${poupancasMes.length?`<h2>💰 Depósitos em objetivos — ${MESES[mes-1]}</h2>
+<table><thead><tr><th>Data</th><th>Objetivo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead>
+<tbody>${poupMesRows}</tbody>
+<tfoot><tr><td colspan="3">Total depositado</td><td style="text-align:right" class="blue">${fmt(totalPoupancasMes)}</td></tr></tfoot></table>`:''}
 <h2>📋 Despesas detalhadas</h2>
 <table><thead><tr><th>Dia</th><th>Categoria</th><th>Descrição</th><th style="text-align:center">Por</th><th style="text-align:right">Valor</th></tr></thead><tbody>${despRows}</tbody>
 <tfoot><tr><td colspan="4">Total despesas</td><td style="text-align:right" class="red">${fmt(totalGasto)}</td></tr></tfoot></table>
