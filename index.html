@@ -928,16 +928,14 @@ async function renderDash(){
     });
     html+=`</div>`;
   }
-  el.innerHTML=html;
-  } catch(e){console.error("renderDash",e);el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar. Tenta recarregar.</div>';}
-  // Nota mensal e objetivo do mês
+  // Nota mensal e objetivo do mês — DENTRO do try block
   let notaData = null;
   try { notaData = await loadNota(); } catch(e) {}
-  const notaTxt  = notaData?.nota || '';
-  const objMes   = notaData?.obj_mes || '';
-  const objVal   = notaData?.obj_mes_valor || '';
+  const notaTxt = notaData?.nota || '';
+  const objMes  = notaData?.obj_mes || '';
+  const objVal  = notaData?.obj_mes_valor || '';
 
-  // Calcular progresso do objetivo do mês — adicionar NO INÍCIO do html
+  // Objetivo do mês — prepend ao html
   if (objMes) {
     const gastoTotal = desp.reduce((s,d)=>s+parseFloat(d.valor),0);
     let objMesHtml = '';
@@ -961,7 +959,7 @@ async function renderDash(){
         <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div>
       </div>`;
     }
-    html = objMesHtml + html;  // prepend — html já existe neste ponto
+    html = objMesHtml + html;
   }
 
   html += `<div class="stitle">📝 Nota do mês</div>
@@ -972,6 +970,8 @@ async function renderDash(){
   </div>`;
 
   html += `<div style="height:1rem"></div>`;
+  el.innerHTML = html;
+  } catch(e) { console.error('renderDash', e); el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar. Tenta recarregar.</div>'; }
 
   // Garantir que o dashboard fica visível após renderizar
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
