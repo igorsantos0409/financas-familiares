@@ -5,11 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0f1117">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Gestão financeira familiar — despesas, poupanças e objetivos">
+<link rel="manifest" href="/financas-familiares/manifest.json">
+<link rel="apple-touch-icon" href="/financas-familiares/favicon.ico">
+<link rel="icon" type="image/x-icon" href="/financas-familiares/favicon.ico">
 <title>Finanças Familiares</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -56,7 +62,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
   .topbar{display:none}
   .bottom-nav{position:fixed;top:0;left:0;bottom:0;right:auto;width:200px;flex-direction:column;border-top:none;border-right:1px solid var(--border);padding:1.5rem 0;gap:.25rem;z-index:100}
   .nav-item{flex-direction:row;justify-content:flex-start;gap:.75rem;padding:.65rem 1.25rem;border-radius:var(--radius-sm);margin:0 .5rem;font-size:.85rem;width:auto}
-  .nav-item span:not(.nav-icon){display:inline!important;font-size:.85rem}
+  .nav-lbl{display:inline;font-size:.85rem}
   .nav-icon{font-size:1.1rem}
   .nav-item.active{background:rgba(79,142,247,.12)}
   .main{margin-left:200px;max-width:none;padding:1.5rem 2rem;padding-bottom:2rem}
@@ -79,8 +85,8 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 }
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem 0;gap:0;background:none;border:none;color:var(--text3);transition:color .15s}
-.nav-item>*:not(.nav-icon){display:none!important}
-.nav-icon{font-size:1.3rem;line-height:1;display:flex!important}
+.nav-lbl{display:none}
+.nav-icon{font-size:1.3rem;line-height:1}
 .nav-item.active{color:var(--accent)}
 .page{display:none}.page.active{display:block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
@@ -456,16 +462,16 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
       <div style="font-size:.85rem;font-weight:700;color:var(--text)" id="nav-username">–</div>
       <div style="font-size:.7rem;color:var(--text3)" id="nav-date-d">–</div>
     </div>
-    <button class="nav-item active" data-p="dashboard" onclick="nav('dashboard')"><span class="nav-icon">🏠</span>Início</button>
-    <button class="nav-item" data-p="despesas" onclick="nav('despesas')"><span class="nav-icon">📋</span>Despesas</button>
-    <button class="nav-item" data-p="rendimentos" onclick="nav('rendimentos')"><span class="nav-icon">💶</span>Rendimentos</button>
-    <button class="nav-item" data-p="graficos" onclick="nav('graficos')"><span class="nav-icon">📊</span>Gráficos</button>
-    <button class="nav-item" data-p="objetivos" onclick="nav('objetivos')"><span class="nav-icon">🎯</span>Objetivos</button>
-    <button class="nav-item" data-p="dicas" onclick="nav('dicas')"><span class="nav-icon">💡</span>Dicas</button>
-    <button class="nav-item" data-p="config" onclick="nav('config')"><span class="nav-icon">⚙️</span>Config</button>
-    <button class="nav-item" data-p="anual" onclick="nav('anual')"><span class="nav-icon">📅</span>Anual</button>
-    <button class="nav-item" data-p="pesquisa" onclick="nav('pesquisa')"><span class="nav-icon">🔍</span>Pesquisa</button>
-    <button class="nav-item" data-p="historico" onclick="nav('historico')"><span class="nav-icon">🗓️</span>Histórico</button>
+    <button class="nav-item active" data-p="dashboard" onclick="nav('dashboard')"><span class="nav-icon">🏠</span><span class="nav-lbl">Início</span></button>
+    <button class="nav-item" data-p="despesas" onclick="nav('despesas')"><span class="nav-icon">📋</span><span class="nav-lbl">Despesas</span></button>
+    <button class="nav-item" data-p="rendimentos" onclick="nav('rendimentos')"><span class="nav-icon">💶</span><span class="nav-lbl">Rendimentos</span></button>
+    <button class="nav-item" data-p="graficos" onclick="nav('graficos')"><span class="nav-icon">📊</span><span class="nav-lbl">Gráficos</span></button>
+    <button class="nav-item" data-p="objetivos" onclick="nav('objetivos')"><span class="nav-icon">🎯</span><span class="nav-lbl">Objetivos</span></button>
+    <button class="nav-item" data-p="dicas" onclick="nav('dicas')"><span class="nav-icon">💡</span><span class="nav-lbl">Dicas</span></button>
+    <button class="nav-item" data-p="config" onclick="nav('config')"><span class="nav-icon">⚙️</span><span class="nav-lbl">Config</span></button>
+    <button class="nav-item" data-p="anual" onclick="nav('anual')"><span class="nav-icon">📅</span><span class="nav-lbl">Anual</span></button>
+    <button class="nav-item" data-p="pesquisa" onclick="nav('pesquisa')"><span class="nav-icon">🔍</span><span class="nav-lbl">Pesquisa</span></button>
+    <button class="nav-item" data-p="historico" onclick="nav('historico')"><span class="nav-icon">🗓️</span><span class="nav-lbl">Histórico</span></button>
     <div style="flex:1"></div>
     <div class="nav-item nav-logout" id="nav-logout" style="display:none;margin-top:auto" onclick="doLogout()"><span class="nav-icon">⎋</span>Sair</div>
   </nav>
