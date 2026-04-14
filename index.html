@@ -55,11 +55,11 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .month-btn:hover{border-color:var(--accent);color:var(--accent)}
 .month-lbl{font-size:.82rem;font-weight:600;min-width:80px;text-align:center}
 .btn-ico{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);width:34px;height:34px;font-size:1rem;display:flex;align-items:center;justify-content:center}
-.main{flex:1;overflow-y:auto;padding:1rem;padding-top:1rem;padding-bottom:90px;max-width:700px;margin:0 auto;width:100%}
+.main{flex:1;overflow-y:auto;padding:1rem;padding-bottom:90px}
 @media(min-width:640px){.main{max-width:700px;margin:0 auto}}
 @media(min-width:900px){
   /* desktop nav handled by hamburger */
-  .main{max-width:960px;padding:1.5rem 2rem;padding-bottom:2rem;margin:0 auto}
+  .main{padding:1.5rem 2rem;padding-bottom:2rem}
   .fab{bottom:1.5rem;right:1.5rem}
   .desktop-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
   .desktop-header h2{font-size:1.2rem;font-weight:700}
@@ -2579,7 +2579,7 @@ async function exportarCSV() {
     ])
   ];
 
-  const csv = linhas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const csv = linhas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('');
   const bom = '\uFEFF';
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
