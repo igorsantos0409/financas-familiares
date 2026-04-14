@@ -3066,8 +3066,10 @@ function toggleMais() {
   overlay.style.display = open ? 'none' : 'block';
 }
 function closeMais() {
-  document.getElementById('mais-menu').style.display = 'none';
-  document.getElementById('mais-overlay').style.display = 'none';
+  const m = document.getElementById('mais-menu');
+  const o = document.getElementById('mais-overlay');
+  if(m) m.style.display = 'none';
+  if(o) o.style.display = 'none';
 }
 function navFromMais(p) {
   closeMais();
