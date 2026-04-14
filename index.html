@@ -55,7 +55,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .month-btn:hover{border-color:var(--accent);color:var(--accent)}
 .month-lbl{font-size:.82rem;font-weight:600;min-width:80px;text-align:center}
 .btn-ico{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius-sm);width:34px;height:34px;font-size:1rem;display:flex;align-items:center;justify-content:center}
-.main{flex:1;overflow-y:auto;padding:1rem;padding-bottom:140px}
+.main{flex:1;overflow-y:auto;padding:1rem;padding-bottom:80px}
 @media(min-width:640px){.main{max-width:700px;margin:0 auto}}
 @media(min-width:900px){
   #app{flex-direction:row}
@@ -83,10 +83,10 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
   .main{padding:2rem 3rem;padding-bottom:2rem}
   .g2{grid-template-columns:repeat(4,1fr)}
 }
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem 0;gap:0;background:none;border:none;color:var(--text3);transition:color .15s}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;height:56px;padding-bottom:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;gap:0;background:none;border:none;color:var(--text3);transition:color .15s;height:100%}
 .nav-lbl{display:none}
-.nav-icon{font-size:1.3rem;line-height:1}
+.nav-icon{font-size:1.5rem;line-height:1}
 .nav-item.active{color:var(--accent)}
 .page{display:none}.page.active{display:block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
@@ -2518,7 +2518,7 @@ async function exportarCSV() {
     ])
   ];
 
-  const csv = linhas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('');
+  const csv = linhas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
   const bom = '\uFEFF';
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
