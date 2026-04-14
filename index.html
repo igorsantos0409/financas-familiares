@@ -44,7 +44,7 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .btn-primary:disabled{opacity:.6;transform:none;cursor:not-allowed}
 #app{display:none;height:100vh;flex-direction:column}
 #app.visible{display:flex}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:100}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.75rem 1rem;padding-left:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:100}
 .topbar-left{display:flex;align-items:center;gap:.75rem}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0}
 .topbar-info .tname{font-size:.9rem;font-weight:600}
@@ -58,14 +58,8 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 .main{flex:1;overflow-y:auto;padding:1rem;padding-bottom:90px}
 @media(min-width:640px){.main{max-width:700px;margin:0 auto}}
 @media(min-width:900px){
-  #app{flex-direction:row}
-  .topbar{display:none}
-  .bottom-nav{position:fixed;top:0;left:0;bottom:0;right:auto;width:200px;flex-direction:column;border-top:none;border-right:1px solid var(--border);padding:1.5rem 0;gap:.25rem;z-index:100}
-  .nav-item{flex-direction:row;justify-content:flex-start;gap:.75rem;padding:.65rem 1.25rem;border-radius:var(--radius-sm);margin:0 .5rem;font-size:.85rem;width:auto}
-  .nav-lbl{display:inline;font-size:.85rem}
-  .nav-icon{font-size:1.1rem}
-  .nav-item.active{background:rgba(79,142,247,.12)}
-  .main{margin-left:200px;max-width:none;padding:1.5rem 2rem;padding-bottom:2rem}
+  /* desktop nav handled by hamburger */
+  .main{max-width:none;padding:1.5rem 2rem;padding-bottom:2rem;margin-left:0}
   .fab{bottom:1.5rem;right:1.5rem}
   .desktop-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
   .desktop-header h2{font-size:1.2rem;font-weight:700}
@@ -83,12 +77,34 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
   .main{padding:2rem 3rem;padding-bottom:2rem}
   .g2{grid-template-columns:repeat(4,1fr)}
 }
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;height:60px}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;gap:0;background:none;border:none;color:var(--text3);transition:color .15s;min-width:0;height:60px}
-.nav-lbl{display:none}
-.nav-icon{font-size:1.8rem;line-height:1;display:block}
-.nav-item.active{color:var(--accent)}
-.nav-desktop-only{display:none!important}
+.bottom-nav{display:none}
+.nav-item{display:none}
+.nav-icon{font-size:1.4rem;line-height:1}
+.nav-lbl{font-size:.82rem;font-weight:500}
+/* HAMBURGER MENU */
+.hbg-btn{position:fixed;top:.75rem;left:.75rem;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);width:42px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:all .2s}
+.hbg-btn:hover{border-color:var(--accent)}
+.hbg-line{width:20px;height:2px;background:var(--text2);border-radius:1px;transition:all .3s}
+.hbg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
+.hbg-overlay.open{opacity:1;pointer-events:all}
+.hbg-drawer{position:fixed;top:0;left:0;bottom:0;width:280px;background:var(--surface);border-right:1px solid var(--border);z-index:250;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.hbg-drawer.open{transform:translateX(0)}
+.hbg-header{padding:1.25rem 1.25rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+.hbg-logo{font-size:1.8rem}
+.hbg-title{font-size:1rem;font-weight:700;color:var(--text)}
+.hbg-subtitle{font-size:.72rem;color:var(--text3);margin-top:.1rem}
+.hbg-nav{flex:1;overflow-y:auto;padding:.5rem 0}
+.hbg-item{display:flex;align-items:center;gap:.85rem;padding:.75rem 1.25rem;cursor:pointer;color:var(--text2);font-size:.9rem;font-weight:500;transition:all .15s;border:none;background:none;width:100%;text-align:left;border-radius:0}
+.hbg-item:hover{background:var(--surface2);color:var(--text)}
+.hbg-item.active{background:rgba(79,142,247,.12);color:var(--accent);font-weight:600}
+.hbg-item-icon{font-size:1.3rem;width:28px;text-align:center;flex-shrink:0}
+.hbg-section{font-size:.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:.75rem 1.25rem .25rem}
+.hbg-footer{padding:.75rem 1.25rem;border-top:1px solid var(--border)}
+.hbg-logout{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;cursor:pointer;color:var(--text3);font-size:.85rem;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);width:100%;transition:all .15s}
+.hbg-logout:hover{color:var(--red);border-color:var(--red)}
+/* TOPBAR ADJUSTMENTS */
+.topbar{padding-left:60px}
+.main{padding-top:1rem}
 .page{display:none}.page.active{display:block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
@@ -430,6 +446,44 @@ button{cursor:pointer;font-family:inherit}input,select,textarea{font-family:inhe
 </div>
 
 <div id="app">
+  <!-- HAMBURGER BUTTON -->
+  <button class="hbg-btn" id="hbg-btn" onclick="toggleDrawer()" aria-label="Menu">
+    <div class="hbg-line"></div>
+    <div class="hbg-line"></div>
+    <div class="hbg-line"></div>
+  </button>
+
+  <!-- OVERLAY -->
+  <div class="hbg-overlay" id="hbg-overlay" onclick="closeDrawer()"></div>
+
+  <!-- DRAWER -->
+  <div class="hbg-drawer" id="hbg-drawer">
+    <div class="hbg-header">
+      <div class="hbg-logo">💰</div>
+      <div>
+        <div class="hbg-title" id="hbg-username">–</div>
+        <div class="hbg-subtitle" id="hbg-date">–</div>
+      </div>
+    </div>
+    <nav class="hbg-nav">
+      <div class="hbg-section">Principal</div>
+      <button class="hbg-item active" data-p="dashboard" onclick="navDrawer('dashboard')"><span class="hbg-item-icon">🏠</span>Início</button>
+      <button class="hbg-item" data-p="despesas" onclick="navDrawer('despesas')"><span class="hbg-item-icon">📋</span>Despesas</button>
+      <button class="hbg-item" data-p="rendimentos" onclick="navDrawer('rendimentos')"><span class="hbg-item-icon">💶</span>Rendimentos</button>
+      <button class="hbg-item" data-p="objetivos" onclick="navDrawer('objetivos')"><span class="hbg-item-icon">🎯</span>Objetivos</button>
+      <div class="hbg-section">Análise</div>
+      <button class="hbg-item" data-p="dicas" onclick="navDrawer('dicas')"><span class="hbg-item-icon">💡</span>Dicas</button>
+      <button class="hbg-item" data-p="graficos" onclick="navDrawer('graficos')"><span class="hbg-item-icon">📊</span>Gráficos</button>
+      <button class="hbg-item" data-p="anual" onclick="navDrawer('anual')"><span class="hbg-item-icon">📅</span>Anual</button>
+      <button class="hbg-item" data-p="historico" onclick="navDrawer('historico')"><span class="hbg-item-icon">🗓️</span>Histórico</button>
+      <div class="hbg-section">Ferramentas</div>
+      <button class="hbg-item" data-p="pesquisa" onclick="navDrawer('pesquisa')"><span class="hbg-item-icon">🔍</span>Pesquisa</button>
+      <button class="hbg-item" data-p="config" onclick="navDrawer('config')"><span class="hbg-item-icon">⚙️</span>Configurações</button>
+    </nav>
+    <div class="hbg-footer">
+      <button class="hbg-logout" onclick="doLogout()"><span style="font-size:1.1rem">⎋</span>Terminar sessão</button>
+    </div>
+  </div>
   <div class="topbar">
     <div class="topbar-left">
       <div class="avatar" id="u-av">?</div>
@@ -710,9 +764,14 @@ async function boot(){
     document.getElementById('app').classList.add('visible');
     document.getElementById('u-av').textContent=nome[0].toUpperCase();
     document.getElementById('u-nm').textContent=nome.charAt(0).toUpperCase()+nome.slice(1);
-    document.getElementById('u-dt').textContent=new Date().toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'});
+    const dateStr=new Date().toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'});
+    document.getElementById('u-dt').textContent=dateStr;
+    // Drawer
+    const hbgU=document.getElementById('hbg-username');
+    const hbgD=document.getElementById('hbg-date');
+    if(hbgU) hbgU.textContent=nome.charAt(0).toUpperCase()+nome.slice(1);
+    if(hbgD) hbgD.textContent=dateStr;
     updateM();
-    setupDesktop();
     nav('dashboard');
   } catch(e) {
     console.error('Boot error:', e);
@@ -757,22 +816,15 @@ async function changeMonth(d){
 
 function nav(p){
   closeMais();
+  closeDrawer();
+  updateDrawerActive(p);
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   const pageEl = document.getElementById(`page-${p}`);
-  const navEl  = document.querySelector(`[data-p="${p}"]`);
   if(pageEl) pageEl.classList.add('active');
-  if(navEl)  navEl.classList.add('active');
-  // If page is in "mais" menu, highlight the mais button
-  const mainPages = ['dashboard','despesas','objetivos','dicas'];
-  const maisBtn = document.getElementById('nav-mais-btn');
-  if (!mainPages.includes(p) && maisBtn && window.innerWidth < 900) maisBtn.classList.add('active');
-  document.getElementById('fab').style.display=(p==='despesas'||p==='dashboard')?'flex':'none';
+  const fab = document.getElementById('fab');
+  if(fab) fab.style.display=(p==='despesas'||p==='dashboard')?'flex':'none';
   const result = renderPage(p);
-  if(result && result.then) result.then(()=>{
-    if(pageEl) pageEl.classList.add('active');
-    if(navEl)  navEl.classList.add('active');
-  });
+  if(result && result.then) result.then(()=>{ if(pageEl) pageEl.classList.add('active'); });
 }
 
 function renderPage(p){
@@ -2527,7 +2579,7 @@ async function exportarCSV() {
     ])
   ];
 
-  const csv = linhas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const csv = linhas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('');
   const bom = '\uFEFF';
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
@@ -3079,6 +3131,31 @@ function navFromMais(p) {
   const maisBtn = document.getElementById('nav-mais-btn');
   if (!mainPages.includes(p) && maisBtn) maisBtn.classList.add('active');
   nav(p);
+}
+
+// ── HAMBURGER DRAWER ──────────────────────────────────────────────
+function toggleDrawer() {
+  const drawer  = document.getElementById('hbg-drawer');
+  const overlay = document.getElementById('hbg-overlay');
+  const isOpen  = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+}
+
+function closeDrawer() {
+  document.getElementById('hbg-drawer')?.classList.remove('open');
+  document.getElementById('hbg-overlay')?.classList.remove('open');
+}
+
+function navDrawer(p) {
+  closeDrawer();
+  nav(p);
+}
+
+function updateDrawerActive(p) {
+  document.querySelectorAll('.hbg-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.p === p);
+  });
 }
 
 function showToast(msg,type='success'){
