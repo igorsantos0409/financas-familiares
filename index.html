@@ -1004,26 +1004,38 @@ async function renderDash(){
 
   // Objetivo do mês — prepend ao html
   if (objMes) {
-    const gastoTotal = desp.reduce((s,d)=>s+parseFloat(d.valor),0);
+    const objCatId = notaData?.obj_mes_cat;
+    // Se tem categoria definida, usar só o gasto dessa categoria
+    const gastoRef = objCatId
+      ? desp.filter(d=>d.categoria_id===objCatId).reduce((s,d)=>s+parseFloat(d.valor),0)
+      : desp.reduce((s,d)=>s+parseFloat(d.valor),0);
+    const catRef = objCatId ? cats.find(c=>c.id===objCatId) : null;
+    const catLabel = catRef ? `${catRef.icone} ${catRef.nome}` : 'Total despesas';
     let objMesHtml = '';
     if (objVal && parseFloat(objVal) > 0) {
       const limite = parseFloat(objVal);
-      const pct = Math.min((gastoTotal/limite)*100, 100);
+      const pct = Math.min((gastoRef/limite)*100, 100);
       const cor = pct>=100?'var(--red)':pct>=80?'var(--amber)':'var(--accent)';
       objMesHtml = `<div class="obj-mes-card ${pct>=100?'':'ativo'}" style="margin-bottom:.75rem">
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <div><span style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">🎯 Objetivo do mês</span>
-          <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div></div>
-          <div style="text-align:right"><div style="font-size:1rem;font-weight:700;color:${cor}">${fmt(gastoTotal)}</div>
-          <div style="font-size:.7rem;color:var(--text3)">de ${fmt(limite)}</div></div>
+          <div>
+            <span style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">🎯 Objetivo do mês</span>
+            <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:.1rem">${catLabel}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:1rem;font-weight:700;color:${cor}">${fmt(gastoRef)}</div>
+            <div style="font-size:.7rem;color:var(--text3)">de ${fmt(limite)}</div>
+          </div>
         </div>
         <div class="obj-mes-prog"><div class="obj-mes-fill" style="width:${pct}%;background:${cor}"></div></div>
-        <div style="font-size:.7rem;color:var(--text3)">${pct>=100?'✗ Limite ultrapassado':`✓ Faltam ${fmt(limite-gastoTotal)}`}</div>
+        <div style="font-size:.7rem;color:var(--text3)">${pct>=100?'✗ Limite ultrapassado':`✓ Faltam ${fmt(limite-gastoRef)}`}</div>
       </div>`;
     } else {
       objMesHtml = `<div class="obj-mes-card ativo" style="margin-bottom:.75rem">
-        <div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">🎯 Objetivo do mês</div>
+        <div style="font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">🎯 Objetivo do mês</div>
         <div style="font-size:.9rem;font-weight:600;margin-top:.2rem">${objMes}</div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:.1rem">${catLabel}</div>
       </div>`;
     }
     html = objMesHtml + html;
@@ -1846,20 +1858,23 @@ async function renderConfig() {
 
   // Objetivo do mês
   const notaAtual = await loadNota();
+  const catOptsObj = `<option value="">Todas as categorias</option>` + cats.map(c=>`<option value="${c.id}" ${notaAtual?.obj_mes_cat==c.id?'selected':''}>${c.icone} ${c.nome}</option>`).join('');
   html += `<div class="stitle">🎯 Objetivo do mês — ${MESES[mes-1]}</div>
   <div class="cfg-section"><div class="cfg-items">
-    <div class="cfg-row">
-      <div style="flex:1"><div class="cfg-row-label">Objetivo</div><div class="cfg-row-sub">Desafio ou meta para este mês</div></div>
-    </div>
-    <div style="padding:.5rem">
-      <input type="text" id="cfg-obj-mes" class="cfg-input" style="width:100%;margin-bottom:.5rem"
-        placeholder="ex: Não gastar em restaurantes acima de 150€"
+    <div style="padding:.75rem .5rem">
+      <div style="font-size:.75rem;color:var(--text2);font-weight:500;margin-bottom:.3rem">Descrição</div>
+      <input type="text" id="cfg-obj-mes" class="cfg-input" style="width:100%;margin-bottom:.75rem"
+        placeholder="ex: Não gastar mais de 150€ em restaurantes"
         value="${notaAtual?.obj_mes||''}">
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
-        <input type="number" id="cfg-obj-val" class="cfg-input" min="0" step="10"
-          placeholder="Limite € (opcional)"
-          value="${notaAtual?.obj_mes_valor||''}">
-        <span style="font-size:.75rem;color:var(--text3)">Limite em € (opcional)</span>
+      <div style="font-size:.75rem;color:var(--text2);font-weight:500;margin-bottom:.3rem">Categoria a monitorizar (opcional)</div>
+      <select id="cfg-obj-cat" class="cfg-input" style="width:100%;margin-bottom:.75rem">${catOptsObj}</select>
+      <div style="font-size:.75rem;color:var(--text2);font-weight:500;margin-bottom:.3rem">Limite em € (opcional)</div>
+      <input type="number" id="cfg-obj-val" class="cfg-input" style="width:100%;margin-bottom:.75rem" min="0" step="10"
+        placeholder="ex: 150"
+        value="${notaAtual?.obj_mes_valor||''}">
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:.75rem">
+        💡 Se escolheres uma categoria, o progresso compara apenas o gasto nessa categoria com o limite.<br>
+        Se não escolheres categoria, compara o total de todas as despesas.
       </div>
       <button class="btn-cfg-save" style="width:100%" onclick="saveObjMes()">✓ Guardar objetivo do mês</button>
     </div>
@@ -1872,10 +1887,11 @@ async function renderConfig() {
 }
 
 async function saveObjMes() {
-  const obj = document.getElementById('cfg-obj-mes')?.value.trim() || '';
-  const val = document.getElementById('cfg-obj-val')?.value || '';
+  const obj  = document.getElementById('cfg-obj-mes')?.value.trim() || '';
+  const val  = document.getElementById('cfg-obj-val')?.value || '';
+  const cat  = document.getElementById('cfg-obj-cat')?.value || null;
   const nota = document.getElementById('nota-texto')?.value || '';
-  await saveNota(nota, obj, val);
+  await saveNotaCompleta(nota, obj, val, cat ? parseInt(cat) : null);
   showToast('Objetivo do mês guardado ✓', 'success');
   renderDash();
 }
@@ -2849,8 +2865,12 @@ async function loadNota() {
 }
 
 async function saveNota(texto, objMes, objMesValor) {
+  await saveNotaCompleta(texto, objMes, objMesValor, null);
+}
+
+async function saveNotaCompleta(texto, objMes, objMesValor, objMesCat) {
   const existing = await loadNota();
-  const payload = { user_id: user.id, ano, mes, nota: texto, obj_mes: objMes, obj_mes_valor: objMesValor || null };
+  const payload = { user_id: user.id, ano, mes, nota: texto, obj_mes: objMes, obj_mes_valor: objMesValor || null, obj_mes_cat: objMesCat };
   if (existing) {
     await sb.from('notas_mensais').update(payload).eq('id', existing.id);
   } else {
