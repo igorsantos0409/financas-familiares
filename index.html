@@ -2907,17 +2907,21 @@ async function uploadFoto(event) {
 
   showToast('A enviar foto…', 'success');
   const ext  = file.name.split('.').pop();
-  const path = `recibos/${user.id}/${_fotoTargetId}.${ext}`;
+  const path = `${user.id}/${_fotoTargetId}.${ext}`;
 
   try {
     const { error: upErr } = await sb.storage.from('recibos').upload(path, file, { upsert: true });
-    if (upErr) throw upErr;
+    if (upErr) {
+      console.error('Upload error:', upErr);
+      throw upErr;
+    }
     const { data: urlData } = sb.storage.from('recibos').getPublicUrl(path);
     await sb.from('despesas').update({ foto_url: urlData.publicUrl }).eq('id', _fotoTargetId);
     showToast('Foto guardada ✓', 'success');
     renderDesp();
   } catch(e) {
-    showToast('Erro ao guardar foto. Cria o bucket "recibos" no Supabase Storage.', 'error');
+    console.error('Foto error:', e);
+    showToast('Erro ao guardar foto: ' + (e.message || e), 'error');
   }
   event.target.value = '';
 }
