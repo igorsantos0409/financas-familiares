@@ -2916,7 +2916,17 @@ async function uploadFoto(event) {
       throw upErr;
     }
     const { data: urlData } = sb.storage.from('recibos').getPublicUrl(path);
-    await sb.from('despesas').update({ foto_url: urlData.publicUrl }).eq('id', _fotoTargetId);
+    const publicUrl = urlData.publicUrl;
+    const { data: updData, error: updErr } = await sb.from('despesas')
+      .update({ foto_url: publicUrl })
+      .eq('id', _fotoTargetId)
+      .eq('user_id', user.id)
+      .select();
+    if (updErr) {
+      console.error('Update error:', updErr);
+      throw updErr;
+    }
+    console.log('foto_url updated:', updData);
     showToast('Foto guardada ✓', 'success');
     renderDesp();
   } catch(e) {
@@ -2928,7 +2938,7 @@ async function uploadFoto(event) {
 
 async function delFoto(despId, fotoUrl) {
   if (!confirm('Apagar esta foto?')) return;
-  await sb.from('despesas').update({ foto_url: null }).eq('id', despId);
+  await sb.from('despesas').update({ foto_url: null }).eq('id', despId).eq('user_id', user.id);
   showToast('Foto apagada ✓', 'success');
   renderDesp();
 }
