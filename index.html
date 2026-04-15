@@ -2900,34 +2900,52 @@ function openFotoInput(despId) {
   document.getElementById('foto-input').click();
 }
 
+// Comprime imagem para max 1200px largura, qualidade 75% JPEG
+function comprimirImagem(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.75);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 async function uploadFoto(event) {
   const file = event.target.files[0];
   if (!file || !_fotoTargetId) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('Foto demasiado grande (máx 5MB)', 'error'); return; }
+  if (file.size > 20 * 1024 * 1024) { showToast('Foto demasiado grande (máx 20MB)', 'error'); return; }
 
-  showToast('A enviar foto…', 'success');
-  const ext  = file.name.split('.').pop();
-  const path = `${user.id}/${_fotoTargetId}.${ext}`;
+  showToast('A comprimir e enviar…', 'success');
 
   try {
-    const { error: upErr } = await sb.storage.from('recibos').upload(path, file, { upsert: true });
-    if (upErr) {
-      console.error('Upload error:', upErr);
-      throw upErr;
-    }
+    const compressed = await comprimirImagem(file);
+    const path = `${user.id}/${_fotoTargetId}.jpg`;
+    const sizeBefore = Math.round(file.size/1024);
+    const sizeAfter  = Math.round(compressed.size/1024);
+    console.log(`Foto: ${sizeBefore}KB → ${sizeAfter}KB`);
+
+    const { error: upErr } = await sb.storage.from('recibos').upload(path, compressed, {
+      upsert: true, contentType: 'image/jpeg'
+    });
+    if (upErr) throw upErr;
+
     const { data: urlData } = sb.storage.from('recibos').getPublicUrl(path);
-    const publicUrl = urlData.publicUrl;
-    const { data: updData, error: updErr } = await sb.from('despesas')
-      .update({ foto_url: publicUrl })
-      .eq('id', _fotoTargetId)
-      .eq('user_id', user.id)
-      .select();
-    if (updErr) {
-      console.error('Update error:', updErr);
-      throw updErr;
-    }
-    console.log('foto_url updated:', updData);
-    showToast('Foto guardada ✓', 'success');
+    const { error: updErr } = await sb.from('despesas')
+      .update({ foto_url: urlData.publicUrl })
+      .eq('id', _fotoTargetId);
+    if (updErr) throw updErr;
+
+    showToast(`Foto guardada ✓ (${sizeAfter}KB)`, 'success');
     renderDesp();
   } catch(e) {
     console.error('Foto error:', e);
@@ -2938,7 +2956,14 @@ async function uploadFoto(event) {
 
 async function delFoto(despId, fotoUrl) {
   if (!confirm('Apagar esta foto?')) return;
-  await sb.from('despesas').update({ foto_url: null }).eq('id', despId).eq('user_id', user.id);
+  // Apagar ficheiro do Storage
+  try {
+    const storagePath = fotoUrl.split('/recibos/')[1];
+    if (storagePath) await sb.storage.from('recibos').remove([storagePath]);
+  } catch(e) { console.warn('Storage delete:', e); }
+  // Limpar foto_url na tabela
+  const { error } = await sb.from('despesas').update({ foto_url: null }).eq('id', despId);
+  if (error) { showToast('Erro ao apagar foto', 'error'); return; }
   showToast('Foto apagada ✓', 'success');
   renderDesp();
 }
